@@ -71,9 +71,9 @@ target/
 .ipynb_checkpoints
 
 # LaTeX
-.aux
-.log
-.synctex.gz
+*.aux
+*.log
+*.synctex.gz
 
 # pyenv
 .python-version
