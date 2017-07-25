@@ -1,8 +1,10 @@
+import numpy as np
+
 def okuboweissparm(u,v,z):
-    du_x=gradient(u[z,:,:],axis=1)
-    dv_x=gradient(v[z,:,:],axis=1)
-    du_y=gradient(u[z,:,:],axis=0)
-    dv_y=gradient(v[z,:,:],axis=0)
+    du_x=np.gradient(u[z,:,:],axis=1)
+    dv_x=np.gradient(v[z,:,:],axis=1)
+    du_y=np.gradient(u[z,:,:],axis=0)
+    dv_y=np.gradient(v[z,:,:],axis=0)
     sn=du_x-dv_y
     ss=dv_x+du_y
     w=vorticity(u,v,z)
@@ -10,8 +12,8 @@ def okuboweissparm(u,v,z):
     return owparm
     
 def vorticity(u,v,z):
-    dv_x=gradient(v[z,:,:],axis=1)
-    du_y=gradient(u[z,:,:],axis=0)
+    dv_x=np.gradient(v[z,:,:],axis=1)
+    du_y=np.gradient(u[z,:,:],axis=0)
     w=dv_x-du_y
     return w
 

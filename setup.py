@@ -8,6 +8,7 @@ setup(name='trackeddy',
       author_email='josue.martinezmoreno@anu.edu.au',
       license='MIT License',
       packages=['trackeddy'],
+      #ext_package='trackeddy', 
       zip_safe=False)
 
 

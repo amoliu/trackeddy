@@ -1,3 +1,5 @@
+import numpy as np
+
 def save_data(path, variable):
     with file(path, 'w') as variable_file:
         np.savetxt(variable_file, variable)
@@ -37,12 +39,12 @@ def dict_eddyt(ts,eddys,eddydt=''):
                 minlat=eddys['Contour'][nn,1].min()
                 minlate=eddys['Ellipse'][nn,1].min()
                 area=eddys['Area'][nn]
-                if len(shape(value['position']))<2:
+                if len(np.shape(value['position']))<2:
                     eddyxt0=value['position'][0]
                     eddyyt0=value['position'][1]
                     areae=value['area']
                 else:
-                    #print shape(value['position'])
+                    #print np.shape(value['position'])
                     eddyxt0=value['position'][-1,0]
                     eddyyt0=value['position'][-1,1]
                     areae=value['area'][-1]
@@ -68,11 +70,11 @@ def dict_eddyt(ts,eddys,eddydt=''):
                     position=value['position']
                     ellipse=value['ellipse']
                     contour=value['contour']
-                    eddydt['eddyn_'+str(number)]={'neddy':number,'time':vstack((time,ts)),\
-                                            'position':vstack((position,eddys['Position'][nn])),\
-                                            'area':vstack((areae,area)),\
-                                            'ellipse':vstack((ellipse,eddys['Ellipse'][nn])),\
-                                            'contour':vstack((contour,eddys['Contour'][nn]))}
+                    eddydt['eddyn_'+str(number)]={'neddy':number,'time':np.vstack((time,ts)),\
+                                            'position':np.vstack((position,eddys['Position'][nn])),\
+                                            'area':np.vstack((areae,area)),\
+                                            'ellipse':np.vstack((ellipse,eddys['Ellipse'][nn])),\
+                                            'contour':np.vstack((contour,eddys['Contour'][nn]))}
                 else:
                     count_new=count_new+1
                     if count_new==len(eddys['EddyN']):

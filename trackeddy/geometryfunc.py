@@ -1,3 +1,5 @@
+import numpy as np
+
 def fitEllipse(x,y):
     x = x[:,np.newaxis]
     y = y[:,np.newaxis]
@@ -6,7 +8,7 @@ def fitEllipse(x,y):
     C = np.ones([6,6])
     C[0,2] = C[2,0] = 2; C[1,1] = -1
     #print S
-    E, V =  eig(np.dot(inv(S), C))
+    E, V =  np.linalg.eig(np.dot(np.linalg.inv(S), C))
     n = np.argmax(np.abs(E))
     a = V[:,n]
     return a
@@ -43,7 +45,7 @@ def eccentricity(a,b):
         b1=a
         a=b
         b=b1
-    eccen=sqrt(1-(b**2/a**2))
+    eccen=np.sqrt(1-(b**2/a**2))
     #print sqrt(a**2-b**2)
     return eccen
 

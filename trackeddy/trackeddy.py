@@ -1,3 +1,11 @@
+import numpy as np
+import numpy.ma as ma
+import pylab as plt
+from datastruct import *
+from geometryfunc import *
+from init import *
+from physics import *
+
 def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=False):
     '''
     *************Scan Eddym***********
@@ -25,50 +33,50 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=
     contour_path=[]
     position=[]
     area=[]
-    shapedata=shape(ssh)
+    shapedata=np.shape(ssh)
     if ssh is ma.masked:
         print 'Invalid ssh data, must be masked'
         return
     if shapedata == [len(lat), len(lon)]:
         print 'Invalid ssh data size, should be [length(lat) length(lon]'
         return
-    if shape(areamap) == shapedata:
-        if shape(areamap) == [1, 1] | len(areamap) != len(lat):
+    if np.shape(areamap) == shapedata:
+        if np.shape(areamap) == [1, 1] | len(areamap) != len(lat):
             print 'Invalid areamap, using NaN for eddy surface area'
         return
     #Saving mask for future post-processing.  
     mask=ma.getmask(ssh)
-    sshnan=ssh.filled(nan)
+    sshnan=ssh.filled(np.nan)
     #sshnan=ma.masked_array(okparm, mask=mask[0,:,:])
     #sshnan=sshnan.filled(nan)
     #Obtain the contours of a surface (contourf), this aproach is better than the contour.
     if len(shapedata)==3:
-        CS=contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
+        CS=plt.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
                 sshnan[date,areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
     else:
-        CS=contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
+        CS=plt.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
                 sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
     CONTS=CS.allsegs[:][:]
     #Loop in the contours of the levels defined.
     total_contours=0
     total_eddy=[]
     eddyn=0
-    for ii in range(0,shape(CONTS)[0]):
+    for ii in range(0,np.shape(CONTS)[0]):
         CONTSlvls=CONTS[ii]
-        for jj in range(0,shape(CONTSlvls)[0]):
+        for jj in range(0,np.shape(CONTSlvls)[0]):
             CONTeach=CONTSlvls[jj]
             if (len(CONTeach[:,0]) | len(CONTeach[:,1])) <= 20:
                 #print 'Singular index I cant get an ellipse with this data'
-                xx=nan
-                yy=nan
-                center=[nan,nan]
+                xx=np.nan
+                yy=np.nan
+                center=[np.nan,np.nan]
                 check=False
             else:
                 ellipse = fitEllipse(CONTeach[:,0],CONTeach[:,1])
                 center = ellipse_center(ellipse)
                 phi = ellipse_angle_of_rotation(ellipse)
                 axes = ellipse_axis_length(ellipse)
-                R = np.arange(0,2.1*pi, 0.1)
+                R = np.arange(0,2.1*np.pi, 0.1)
                 a,b = axes
                 #Ellipse coordinates.
                 xx = center[0] + a*np.cos(R)*np.cos(phi) - b*np.sin(R)*np.sin(phi)
@@ -84,10 +92,10 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=
                     idxcheck,idycheck=find2d(lon,lat,CONTeach[ii,0],CONTeach[ii,1])
                     idxelipcheck,idyelipcheck=find2d(lon,lat,center[0],center[1])
                     if len(shapedata)==3:
-                        if sshnan[date,idycheck,idxcheck]==nan:
+                        if sshnan[date,idycheck,idxcheck]==np.nan:
                             landcount=countzeros+1
                     else:
-                        if sshnan[idycheck,idxcheck]==nan:
+                        if sshnan[idycheck,idxcheck]==np.nan:
                             landcount=countzeros+1
                 if landcount>=len(CONTeach[:,0])/2:
                     #print 'Thisone is land'
@@ -174,9 +182,9 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=
                         plt.show()
                         plt.close()
             total_contours=total_contours+1
-    contour_path=array(contour_path)
-    ellipse_path=array(ellipse_path)
-    possition=array(position)
+    contour_path=np.array(contour_path)
+    ellipse_path=np.array(ellipse_path)
+    possition=np.array(position)
     eddys=dict_eddym(contour_path, ellipse_path, position,area,total_eddy)
 #    if destdir!='':
 #        save_data(destdir+'day'+str(date)+'_one_step_cont'+str(total_contours)+'.dat', variable)
@@ -194,7 +202,7 @@ def scan_eddyt(ssh,lat,lon,levels,date,areamap,destdir='',okparm='',diagnostics=
     '''
     #if destdir!='' or os.path.isdir(destdir)==False:
     #    os.makedirs(directory)
-    if len(shape(ssh))==3:
+    if len(np.shape(ssh))==3:
         if date==0:
             print 'Please change the date to the number of iteratios you want'
     else:
