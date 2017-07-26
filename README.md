@@ -20,7 +20,7 @@ This make the package an editable install so that it can be updated with future 
 1. Move into your TrackEddy directory.
 1. Update your GitHub repository.
 `git pull`
-1. Edit your install of TracPy.
+1. Edit your install of TrackEddy.
 `pip install -e .` 
 or
 `pip install --force-reinstall -e .`
@@ -32,6 +32,6 @@ or, for local installation:
 
 Work in progress!
 
-## To learn more about the module TracPy
+## To learn more about the module TrackEddy
 
 Work in progress!
