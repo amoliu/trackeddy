@@ -5,6 +5,7 @@ from datastruct import *
 from geometryfunc import *
 from init import *
 from physics import *
+from mpl_toolkits.basemap import Basemap
 
 def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=False):
     '''
@@ -50,12 +51,40 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=
     #sshnan=ma.masked_array(okparm, mask=mask[0,:,:])
     #sshnan=sshnan.filled(nan)
     #Obtain the contours of a surface (contourf), this aproach is better than the contour.
+    if len(np.shape(lon))== 1 and len(np.shape(lat)) == 1:
+        Lon,Lat=np.meshgrid(lon,lat)
+    else:
+        Lon,Lat=lon,lat
+    
+    min_x=Lon[0,0]
+    min_y=Lat[0,0]
+    max_x=Lon[-1,-1]
+    max_y=Lat[-1,-1]
+    
+    fig, ax = plt.subplots(figsize=(10,10))
+    
+    m = Basemap(projection='ortho',lat_0=-90,lon_0=-100,resolution='f')
+    
+    m.drawcoastlines()
+    m.fillcontinents(color='black',lake_color='aqua')
+    m.drawmeridians(np.arange(0,360,30),labels=[1,1,0,0],fontsize=10)
+    lonm,latm=m(Lon,Lat)
+    
     if len(shapedata)==3:
+        m.contourf(lonm[areamap[0,0]:areamap[0,1]],latm[areamap[1,0]:areamap[1,1]],\
+                sshnan[date,areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
+        plt.show()
         CS=plt.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
                 sshnan[date,areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
+        plt.close()
     else:
+        m.contourf(lonm[areamap[0,0]:areamap[0,1]],latm[areamap[1,0]:areamap[1,1]],\
+                sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
+        plt.show()
         CS=plt.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
                 sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
+        plt.close()
+        
     CONTS=CS.allsegs[:][:]
     #Loop in the contours of the levels defined.
     total_contours=0
@@ -185,10 +214,11 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=
     contour_path=np.array(contour_path)
     ellipse_path=np.array(ellipse_path)
     possition=np.array(position)
-    eddys=dict_eddym(contour_path, ellipse_path, position,area,total_eddy)
+    level=0
+    eddys=dict_eddym(contour_path, ellipse_path,position,area,total_eddy,level)
 #    if destdir!='':
 #        save_data(destdir+'day'+str(date)+'_one_step_cont'+str(total_contours)+'.dat', variable)
-    print("The total of contours was", total_contours)
+    print "The total of contours was", total_contours
     return eddys
     
 def scan_eddyt(ssh,lat,lon,levels,date,areamap,destdir='',okparm='',diagnostics=False):

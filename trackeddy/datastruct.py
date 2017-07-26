@@ -5,8 +5,8 @@ def save_data(path, variable):
         np.savetxt(variable_file, variable)
     variable_file.close() 
 
-def dict_eddym(contour, ellipse, position,area,number):
-    contour_data={'Contour':contour,'Ellipse':ellipse,'Position':position,'Area':area,'EddyN':number}
+def dict_eddym(contour, ellipse, position,area,number,level):
+    contour_data={'Contour':contour,'Ellipse':ellipse,'Position':position,'Area':area,'EddyN':number,'Level':level}
     return contour_data
 
 def dict_eddyt(ts,eddys,eddydt=''):
@@ -21,10 +21,12 @@ def dict_eddyt(ts,eddys,eddydt=''):
     print('ts',ts)
     if ts==0 or eddydt=='':
         eddydt={'eddyn_'+str(eddys['EddyN'][0]):{'neddy':eddys['EddyN'][0],'time':ts,'position':eddys['Position'][0],\
-                    'area':eddys['Area'][0],'ellipse':eddys['Ellipse'][0],'contour':eddys['Contour'][0]}}
+                    'area':eddys['Area'][0],'ellipse':eddys['Ellipse'][0],'contour':eddys['Contour'][0],\
+                                                 'level':eddys['Level'][0]}}
         for nn in range(1,len(eddys['EddyN'])):
             eddydt['eddyn_'+str(eddys['EddyN'][nn])]={'neddy':eddys['EddyN'][nn],'time':ts,'position':eddys['Position'][nn],\
-                    'area':eddys['Area'][nn],'ellipse':eddys['Ellipse'][nn],'contour':eddys['Contour'][nn]}
+                    'area':eddys['Area'][nn],'ellipse':eddys['Ellipse'][nn],'contour':eddys['Contour'][nn],\
+                                                      'level':eddys['Level'][nn]}
     else:         
         for key, value in eddydt.items():
             print key
@@ -82,7 +84,7 @@ def dict_eddyt(ts,eddys,eddydt=''):
                         eddydt['eddyn_'+str(eddys['EddyN'][nn])]={'neddy':eddys['EddyN'][nn],'time':[ts],\
                                             'position':eddys['Position'][nn],'area':eddys['Area'][nn],\
                                             'ellipse':eddys['Ellipse'][nn],\
-                                            'contour':eddys['Contour'][nn]}
+                                            'contour':eddys['Contour'][nn],'level':eddys['Level'][nn]}
         #eddydt={'eddyn'+str(eddys['EddyN']):{'time':ts,'position':eddys['Position'],'ellipse':eddys['Ellipse']\
 #                                    ,'contour':eddys['Contour']}}
     #print eddydt
