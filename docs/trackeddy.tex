@@ -2,6 +2,20 @@
 \usepackage[english]{babel} 
 \usepackage[utf8]{inputenc}
 \usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily,
+	showstringspaces=false,
+	commentstyle=\color{red},
+	keywordstyle=\color{blue}
+}
+
+\lstdefinestyle{bash}
+{
+	backgroundcolor=\color{gray},
+	basicstyle=\small\color{white}\ttfamily
+}
+
 \geometry{
 	a4paper,
 	total={170mm,257mm},
@@ -15,6 +29,49 @@
 \author{Josu\'e Mart\'inez Moreno }
 \cleanlookdateon
 \begin{document}
-	\maketitle
-    This source code will let you identify all the eddies in the ocean, but also It can be adapted for any other normal function in a 2D surface.
+\maketitle
+This source code will let you identify all the eddies in the ocean, but also It can be adapted for any other normal function in a 2D surface.
+\section{Installation}
+\subsection{Get Code}
+\begin{enumerate}
+\item Make a new directory where you want the repository.
+\item Clone the TrackEddy repository from Github. In the command prompt, type:
+\begin{lstlisting}[language=bash,style=bash]
+ git clone https://github.com/Josue-Martinez-Moreno/trackeddy.git
+\end{lstlisting}
+\item Install the package globally: 
+\begin{lstlisting}[language=bash,style=bash]
+pip install -e .
+\end{lstlisting}
+This make the package an editable install so that it can be updated with future additions to TrackEddy. To instead install the package locally:
+\begin{lstlisting}[language=bash,style=bash]
+pip install --user -e .
+\end{lstlisting}
+\end{enumerate}
+\subsection{Update the code later}
+\begin{enumerate}
+\item Move into your TrackEddy directory.
+\item Update your GitHub repository. 
+\begin{lstlisting}[language=bash,style=bash]
+git pull
+\end{lstlisting}
+Edit your install of TrackEddy.
+\begin{lstlisting}[language=bash,style=bash]
+pip install -e .
+\end{lstlisting}
+or 
+\begin{lstlisting}[language=bash,style=bash]
+pip install --force-reinstall -e . 
+\end{lstlisting}
+or, for local installation: 
+\begin{lstlisting}[language=bash,style=bash]
+pip install --ignore-installed --user .
+\end{lstlisting}
+\end{enumerate}
+\section{Test the code}
+\textcolor{red}{Work in progress!}
+\section{Usage}
+\textcolor{red}{Work in progress!}
+\section{Learn more about TrackEddy.}
+\textcolor{red}{Work in progress!}
 \end{document}
