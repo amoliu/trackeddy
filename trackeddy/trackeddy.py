@@ -34,6 +34,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=
     contour_path=[]
     position=[]
     area=[]
+    level=[]
     shapedata=np.shape(ssh)
     if ssh is ma.masked:
         print 'Invalid ssh data, must be masked'
@@ -71,14 +72,22 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=
     lonm,latm=m(Lon,Lat)
     
     if len(shapedata)==3:
-        m.contourf(lonm[areamap[0,0]:areamap[0,1]],latm[areamap[1,0]:areamap[1,1]],\
+        m.contourf(lonm[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],\
+                   latm[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],\
                 sshnan[date,areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
         plt.show()
         CS=plt.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
                 sshnan[date,areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
         plt.close()
     else:
-        m.contourf(lonm[areamap[0,0]:areamap[0,1]],latm[areamap[1,0]:areamap[1,1]],\
+        print areamap
+        print lonm[0,:]
+        print latm[0,:]
+        print np.shape(lonm[areamap[0,0]:areamap[0,1],:])
+        print np.shape(latm[areamap[1,0]:areamap[1,1],:])
+        print np.shape(sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]])
+        m.contourf(lonm[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],\
+                   latm[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],\
                 sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
         plt.show()
         CS=plt.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
@@ -170,6 +179,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=
                     position.append(center)
                     total_eddy.append(eddyn)
                     area.append(contarea)
+                    level.append(0)
                     eddyn=eddyn+1
                     if diagnostics == True:
                         f, (ax1, ax2) = plt.subplots(1, 2,figsize=(13, 6))
@@ -214,7 +224,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=
     contour_path=np.array(contour_path)
     ellipse_path=np.array(ellipse_path)
     possition=np.array(position)
-    level=0
+    level=np.array(level)
     eddys=dict_eddym(contour_path, ellipse_path,position,area,total_eddy,level)
 #    if destdir!='':
 #        save_data(destdir+'day'+str(date)+'_one_step_cont'+str(total_contours)+'.dat', variable)
