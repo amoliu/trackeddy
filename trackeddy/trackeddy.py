@@ -7,6 +7,15 @@ from init import *
 from physics import *
 from mpl_toolkits.basemap import Basemap
 
+def scan_eddyz(ssh,lon,lat,levelrange,date,areamap,destdir='',okparm='',diagnostics=False)
+    '''
+    ************Scan Eddyz*************
+    Function to identify eddys in a range of ssh contours,
+    using the function Scan Eddym or Scan Eddydt. 
+    Usage:
+    '''
+    print "Work in progress"
+    
 def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=False):
     '''
     *************Scan Eddym***********
@@ -80,12 +89,12 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=
                 sshnan[date,areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
         plt.close()
     else:
-        print areamap
-        print lonm[0,:]
-        print latm[0,:]
-        print np.shape(lonm[areamap[0,0]:areamap[0,1],:])
-        print np.shape(latm[areamap[1,0]:areamap[1,1],:])
-        print np.shape(sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]])
+        #print areamap
+        #print lonm[0,:]
+        #print latm[0,:]
+        #print np.shape(lonm[areamap[0,0]:areamap[0,1],:])
+        #print np.shape(latm[areamap[1,0]:areamap[1,1],:])
+        #print np.shape(sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]])
         m.contourf(lonm[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],\
                    latm[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],\
                 sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
