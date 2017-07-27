@@ -7,7 +7,7 @@ from init import *
 from physics import *
 from mpl_toolkits.basemap import Basemap
 
-def scan_eddyz(ssh,lon,lat,levelrange,date,areamap,destdir='',okparm='',diagnostics=False)
+def scan_eddyz(ssh,lon,lat,levelrange,date,areamap,destdir='',okparm='',diagnostics=False):
     '''
     ************Scan Eddyz*************
     Function to identify eddys in a range of ssh contours,
