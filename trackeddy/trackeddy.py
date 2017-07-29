@@ -16,6 +16,32 @@ def scan_eddyz(ssh,lon,lat,levelrange,date,areamap,destdir='',okparm='',diagnost
     '''
     print "Work in progress"
     
+def exact_eddy(eddydt,lat,lon,data):
+    print 'Work in progress'
+    level=-80
+    threshold=1
+    for ct in range(0,len(eddytd['eddyn_1']['time'])):
+        rct=eddytd['eddyn_1']['time'][ct][0]
+        data=eta[rct,:,:]*1
+        juesteddy=zeros(shape(data))
+        lonmi=eddytd['eddyn_1']['contour'][ct][0].min()
+        lonma=eddytd['eddyn_1']['contour'][ct][0].max()
+        latmi=eddytd['eddyn_1']['contour'][ct][1].min()
+        latma=eddytd['eddyn_1']['contour'][ct][1].max()
+        #print latma, lonma
+        mimcx,mimcy=find2d(lon,lat,lonmi,latmi)
+        mamcx,mamcy=find2d(lon,lat,lonma,latma)
+        
+        loncm=lon[mimcx-threshold:mamcx+1+threshold]
+        latcm=lat[mimcy-threshold:mamcy+1+threshold]
+        datacm=data[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]
+        datacm[datacm<=level]=nan
+        pcolormesh(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],datacm)
+        contourf(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],datacm,alpha=0.5)
+        plot(eddytd['eddyn_1']['contour'][ct][0],eddytd['eddyn_1']['contour'][ct][1],'-m')
+        plt.show()        
+        juesteddy[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]=datacm
+    
 def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=False):
     '''
     *************Scan Eddym***********
