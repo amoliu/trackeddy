@@ -1,4 +1,47 @@
 import numpy as np
+import netCDF4 as nc4
+from datetime import datetime
+
+def eddync():
+    print 'Work in progress'
+    
+def vargeonc(filename,lat,lon,var,tt,varname,nc_description='',units='',dt='',dim='2D'):
+    f = nc4.Dataset(filename,'w', format='NETCDF4')
+    vargrp = f.createGroup(varname)
+    vargrp.createDimension('lon', len(lon))
+    vargrp.createDimension('lat', len(lat))
+    vargrp.createDimension('time', None)
+    longitude = vargrp.createVariable('Longitude', 'f4', 'lon')
+    latitude = vargrp.createVariable('Latitude', 'f4', 'lat')
+    
+    time = vargrp.createVariable('Time', 'i4', 'time')
+    if dim == '3D':
+        vargrp.createDimension('z', len(z))
+        levels = vargrp.createVariable('Levels', 'i4', 'z')
+        varnc = vargrp.createVariable('Temperature', 'f4', ('time', 'lon', 'lat', 'z'))
+        varnc[tt,:,:,:] = var
+        levels[:] = z
+        levels.units = 'meters [m]'
+    else:
+        varnc = vargrp.createVariable('Temperature', 'f4', ('time', 'lon', 'lat'))
+        varnc[tt,:,:] = var
+        
+    longitude[:] = lon
+    latitude[:] = lat
+    today = datetime.today()
+    time_num = today.toordinal()
+    time[tt]=time_num
+    
+    #Add global attributes
+    f.description = nc_description
+    f.history = "Created " + today.strftime("%d/%m/%y")
+    
+    #Add local attributes to variable instances
+    longitude.units = 'Longitude [Degrees East]'
+    latitude.units = 'Latitude [Degrees North]'
+    time.units = 'days since Jan 01, 0001'
+    varnc.units = units
+    f.close()
 
 def save_data(path, variable):
     with file(path, 'w') as variable_file:
@@ -58,9 +101,11 @@ def dict_eddyt(ts,eddys,eddydt=''):
                 #    eddyyt0=value['position'][1]
                 #    eddyxt1=eddys['Position'][nn][0]
                 #    eddyyt1=eddys['Position'][nn][1]
+                print eddys['time'][-1],ts
                 if (eddyxt1<=maxlon and eddyxt1>=minlon and eddyyt1<=maxlat and eddyyt1>=minlat) and\
                     (eddyxt0<=maxlon and eddyxt0>=minlon and eddyyt0<=maxlat and eddyyt0>=minlat) and\
-                    (areae<=area+area/4 and areae>=area-area/4) and (eddyxt1!=eddyxt0 and eddyyt1!=eddyyt0):
+                    (areae<=area+area/4 and areae>=area-area/4) and (eddyxt1!=eddyxt0 and eddyyt1!=eddyyt0)\
+                    and (eddydt['time'][-1]-ts)>5:
                 #if (value['neddy']==eddys['EddyN'][nn]):
                     print 'number',nn,'max',maxlon,'t0',eddyxt0,'t1',eddyxt1,'min',minlon,'area0',areae,'area1',area
                     print nn,maxlat,eddyyt0,eddyyt1,minlat
