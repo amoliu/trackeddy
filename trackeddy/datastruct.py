@@ -7,23 +7,22 @@ def eddync():
     
 def vargeonc(filename,lat,lon,var,tt,varname,nc_description='',units='',dt='',dim='2D'):
     f = nc4.Dataset(filename,'w', format='NETCDF4')
-    vargrp = f.createGroup(varname)
-    vargrp.createDimension('lon', len(lon))
-    vargrp.createDimension('lat', len(lat))
-    vargrp.createDimension('time', None)
-    longitude = vargrp.createVariable('Longitude', 'f4', 'lon')
-    latitude = vargrp.createVariable('Latitude', 'f4', 'lat')
+    f.createDimension('lon', len(lon))
+    f.createDimension('lat', len(lat))
+    f.createDimension('time', None)
+    longitude = f.createVariable('Longitude', 'f4', 'lon')
+    latitude = f.createVariable('Latitude', 'f4', 'lat')
     
-    time = vargrp.createVariable('Time', 'i4', 'time')
+    time = f.createVariable('Time', 'i4', 'time')
     if dim == '3D':
-        vargrp.createDimension('z', len(z))
-        levels = vargrp.createVariable('Levels', 'i4', 'z')
-        varnc = vargrp.createVariable('Temperature', 'f4', ('time', 'lon', 'lat', 'z'))
+        f.createDimension('z', len(z))
+        levels = f.createVariable('Levels', 'i4', 'z')
+        varnc = f.createVariable(varname, 'f4', ('time', 'lon', 'lat', 'z'))
         varnc[tt,:,:,:] = var
         levels[:] = z
         levels.units = 'meters [m]'
     else:
-        varnc = vargrp.createVariable('Temperature', 'f4', ('time', 'lon', 'lat'))
+        varnc = f.createVariable(varname, 'f4', ('time', 'lon', 'lat'))
         varnc[tt,:,:] = var
         
     longitude[:] = lon
