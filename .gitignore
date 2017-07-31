@@ -107,3 +107,6 @@ ENV/
 
 # Data
 data.output/
+
+# Git
+.gitignore
