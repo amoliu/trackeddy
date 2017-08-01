@@ -99,7 +99,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,destdir='',okparm='',diagnostics=
     
     fig, ax = plt.subplots(figsize=(10,10))
     
-    m = Basemap(projection='ortho',lat_0=-90,lon_0=-100,resolution='f')
+    m = Basemap(projection='ortho',lat_0=-90,lon_0=-100,resolution='c')
     
     m.drawcoastlines()
     m.fillcontinents(color='black',lake_color='aqua')

@@ -17,12 +17,12 @@ def vargeonc(filename,lat,lon,var,tt,varname,nc_description='',units='',dt='',di
     if dim == '3D':
         f.createDimension('z', len(z))
         levels = f.createVariable('Levels', 'i4', 'z')
-        varnc = f.createVariable(varname, 'f4', ('time', 'lon', 'lat', 'z'))
+        varnc = f.createVariable(varname, 'f4', ('time', 'lat', 'lon', 'z'))
         varnc[tt,:,:,:] = var
         levels[:] = z
         levels.units = 'meters [m]'
     else:
-        varnc = f.createVariable(varname, 'f4', ('time', 'lon', 'lat'))
+        varnc = f.createVariable(varname, 'f4', ('time', 'lat', 'lon'))
         varnc[tt,:,:] = var
         
     longitude[:] = lon
@@ -100,11 +100,12 @@ def dict_eddyt(ts,eddys,eddydt=''):
                 #    eddyyt0=value['position'][1]
                 #    eddyxt1=eddys['Position'][nn][0]
                 #    eddyyt1=eddys['Position'][nn][1]
-                print eddys['time'][-1],ts
+                #print dir(value)
+                #print value['time'][-1],ts
                 if (eddyxt1<=maxlon and eddyxt1>=minlon and eddyyt1<=maxlat and eddyyt1>=minlat) and\
                     (eddyxt0<=maxlon and eddyxt0>=minlon and eddyyt0<=maxlat and eddyyt0>=minlat) and\
                     (areae<=area+area/4 and areae>=area-area/4) and (eddyxt1!=eddyxt0 and eddyyt1!=eddyyt0)\
-                    and (eddydt['time'][-1]-ts)>5:
+                    and (value['time'][-1]-ts)>5:
                 #if (value['neddy']==eddys['EddyN'][nn]):
                     print 'number',nn,'max',maxlon,'t0',eddyxt0,'t1',eddyxt1,'min',minlon,'area0',areae,'area1',area
                     print nn,maxlat,eddyyt0,eddyyt1,minlat
