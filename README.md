@@ -2,7 +2,14 @@
 
 This code will let you identify and track any normal shape in a 2D space. The principal objective of this development is finding and tracking all the eddies in the ocean. 
 
-![Alt Text](https://github.com/Josue-Martinez-Moreno/trackeddy/blob/master/output/eddyn_13.gif)
+![Alt Text](https://github.com/Josue-Martinez-Moreno/trackeddy/blob/master/output/eddyn_13.gif "Eddy trajectory in the Souther Ocean")
+
+
+
+# Beta Fase Release:
+Now the source code supports the extraction of eddies each time step and moving in Z. Some bugs need to be fixed but right now it can be implemented in some data analysis.
+
+![Alt Text](https://github.com/Josue-Martinez-Moreno/trackeddy/blob/master/output/eddy_removal.png "Extraction off eddies in the Southern Ocean [Data provided by Adele Morrison].")
 
 ## To get the code
 

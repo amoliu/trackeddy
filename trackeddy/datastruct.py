@@ -53,8 +53,7 @@ def dict_eddym(contour, ellipse, position,area,number,level):
 
 def dict_eddyt(ts,eddys,eddydt=''):
     '''
-    Function to create a dictionary with al the important
-    of each eddy.
+    Function to create a dictionary with all the eddies.
     All the keys have the following form:
     {eddyn_0:{neddy,time,position,ellipse,contour},eddyn_1:{neddy,time,position,ellipse,contour}}
     Usage:
@@ -62,11 +61,13 @@ def dict_eddyt(ts,eddys,eddydt=''):
     '''
     print('ts',ts)
     if ts==0 or eddydt=='':
-        eddydt={'eddyn_'+str(eddys['EddyN'][0]):{'neddy':eddys['EddyN'][0],'time':ts,'position':eddys['Position'][0],\
+        #Define the variable
+        eddydt={'eddyn_'+str(eddys['EddyN'][0][0]):{'neddy':eddys['EddyN'][0],'time':ts,'position':eddys['Position'][0],\
                     'area':eddys['Area'][0],'ellipse':eddys['Ellipse'][0],'contour':eddys['Contour'][0],\
                                                  'level':eddys['Level'][0]}}
+        #Append all the new data
         for nn in range(1,len(eddys['EddyN'])):
-            eddydt['eddyn_'+str(eddys['EddyN'][nn])]={'neddy':eddys['EddyN'][nn],'time':ts,'position':eddys['Position'][nn],\
+            eddydt['eddyn_'+str(eddys['EddyN'][nn][0])]={'neddy':eddys['EddyN'][nn],'time':ts,'position':eddys['Position'][nn],\
                     'area':eddys['Area'][nn],'ellipse':eddys['Ellipse'][nn],'contour':eddys['Contour'][nn],\
                                                       'level':eddys['Level'][nn]}
     else:         
@@ -87,11 +88,12 @@ def dict_eddyt(ts,eddys,eddydt=''):
                     eddyxt0=value['position'][0]
                     eddyyt0=value['position'][1]
                     areae=value['area']
+                    timee=value['time']
                 else:
-                    #print np.shape(value['position'])
                     eddyxt0=value['position'][-1,0]
                     eddyyt0=value['position'][-1,1]
                     areae=value['area'][-1]
+                    timee=value['time'][-1]
                 eddyxt1=eddys['Position'][nn][0]
                 eddyyt1=eddys['Position'][nn][1]
                 #except ValueError:
@@ -100,12 +102,12 @@ def dict_eddyt(ts,eddys,eddydt=''):
                 #    eddyyt0=value['position'][1]
                 #    eddyxt1=eddys['Position'][nn][0]
                 #    eddyyt1=eddys['Position'][nn][1]
-                #print dir(value)
-                #print value['time'][-1],ts
+#                print dir(value)
+                #print value['time'],timee,ts
                 if (eddyxt1<=maxlon and eddyxt1>=minlon and eddyyt1<=maxlat and eddyyt1>=minlat) and\
                     (eddyxt0<=maxlon and eddyxt0>=minlon and eddyyt0<=maxlat and eddyyt0>=minlat) and\
                     (areae<=area+area/4 and areae>=area-area/4) and (eddyxt1!=eddyxt0 and eddyyt1!=eddyyt0)\
-                    and (value['time'][-1]-ts)>5:
+                    and (int(timee)-ts)>5 and int(timee)!=ts :
                 #if (value['neddy']==eddys['EddyN'][nn]):
                     print 'number',nn,'max',maxlon,'t0',eddyxt0,'t1',eddyxt1,'min',minlon,'area0',areae,'area1',area
                     print nn,maxlat,eddyyt0,eddyyt1,minlat
@@ -126,7 +128,7 @@ def dict_eddyt(ts,eddys,eddydt=''):
                     count_new=count_new+1
                     if count_new==len(eddys['EddyN']):
                         print '*****New Eddy*****'
-                        eddydt['eddyn_'+str(eddys['EddyN'][nn])]={'neddy':eddys['EddyN'][nn],'time':[ts],\
+                        eddydt['eddyn_'+str(eddys['EddyN'][nn])]={'neddy':eddys['EddyN'][nn],'time':ts,\
                                             'position':eddys['Position'][nn],'area':eddys['Area'][nn],\
                                             'ellipse':eddys['Ellipse'][nn],\
                                             'contour':eddys['Contour'][nn],'level':eddys['Level'][nn]}
