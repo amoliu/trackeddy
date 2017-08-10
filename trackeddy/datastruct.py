@@ -109,8 +109,8 @@ def dict_eddyt(ts,eddys,eddydt=''):
                     (areae<=area+area/4 and areae>=area-area/4) and (eddyxt1!=eddyxt0 and eddyyt1!=eddyyt0)\
                     and (int(timee)-ts)>5 and int(timee)!=ts :
                 #if (value['neddy']==eddys['EddyN'][nn]):
-                    print 'number',nn,'max',maxlon,'t0',eddyxt0,'t1',eddyxt1,'min',minlon,'area0',areae,'area1',area
-                    print nn,maxlat,eddyyt0,eddyyt1,minlat
+                    #print 'number',nn,'max',maxlon,'t0',eddyxt0,'t1',eddyxt1,'min',minlon,'area0',areae,'area1',area
+                    #print nn,maxlat,eddyyt0,eddyyt1,minlat
                     print "****Tracking Eddy"+str(nn)+"****"
                     number=value['neddy']
                     time=value['time']
@@ -123,7 +123,8 @@ def dict_eddyt(ts,eddys,eddydt=''):
                                             'position':np.vstack((position,eddys['Position'][nn])),\
                                             'area':np.vstack((areae,area)),\
                                             'ellipse':np.vstack((ellipse,eddys['Ellipse'][nn])),\
-                                            'contour':np.vstack((contour,eddys['Contour'][nn]))}
+                                            'contour':np.vstack((contour,eddys['Contour'][nn])),\
+                                            'level':np.vstack((level,eddys['Level'][nn]))}
                 else:
                     count_new=count_new+1
                     if count_new==len(eddys['EddyN']):
@@ -136,3 +137,106 @@ def dict_eddyt(ts,eddys,eddydt=''):
 #                                    ,'contour':eddys['Contour']}}
     #print eddydt
     return eddydt
+
+
+
+
+def dict_eddyz(ts,ll,minlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
+    '''
+    Function to create a dictionary with all the important eddy in Z.
+    All the keys have the following form:
+    {eddyn_0:{neddy,time,position,ellipse,contour},eddyn_1:{neddy,time,position,ellipse,contour}}
+    Usage:
+    
+    '''
+    print('Level analized',ll)
+    if ll==minlevel or eddz=='':
+        eddz=eddys
+    else:         
+        count_new=0
+        #Always check in the next one because probable we will have more contours if we get closer to 0.
+        checklist=[]
+        checklist1=[]
+        contour=eddz['Contour']
+        ellipse=eddz['Ellipse']
+        position=eddz['Position']
+        area=eddz['Area']
+        number=eddz['EddyN']
+        level=eddz['Level']
+        for nn1 in range(0,len(eddys['EddyN'])):
+            maxlon=eddys['Contour'][nn1,0].max()
+            maxlone=eddys['Ellipse'][nn1,0].max()
+            maxlat=eddys['Contour'][nn1,1].max()
+            maxlate=eddys['Ellipse'][nn1,1].max()
+            minlon=eddys['Contour'][nn1,0].min()
+            minlone=eddys['Ellipse'][nn1,0].min()
+            minlat=eddys['Contour'][nn1,1].min()
+            minlate=eddys['Ellipse'][nn1,1].min()
+            arealb=eddys['Area'][nn1]
+            eddyxlb=eddys['Position'][nn1,0]
+            eddyylb=eddys['Position'][nn1,1]
+            
+            #print eddz['Position'][:,0]
+            
+            for nn0 in range(0,len(eddz['EddyN'])):
+                eddyxlt=eddz['Position'][nn0,0]
+                eddyylt=eddz['Position'][nn0,1]
+                arealt=eddz['Area'][nn0]
+                
+                if (eddyxlb<=maxlon and eddyxlb>=minlon and eddyylb<=maxlat and eddyylb>=minlat) and\
+                (eddyxlt<=maxlon and eddyxlt>=minlon and eddyylt<=maxlat and eddyylt>=minlat) and\
+                (arealt>=arealb/threshold and arealt<=arealb):
+                    print 'Contour is growing'
+                    
+                    
+                    #print contour[nn1]
+                    contour[nn0]=eddys['Contour'][nn1]
+                    ellipse[nn0]=eddys['Ellipse'][nn1]
+                    position[nn0]=eddys['Position'][nn1]
+                    area[nn0]=eddys['Area'][nn1]
+                    level[nn0]=eddys['Level'][nn1]
+                    checklist.append(eddys['EddyN'][nn1][0])
+                    #print number[nn0][0],eddys['EddyN'][nn1][0]
+                    #eddz={'Contour':contour,'Ellipse':ellipse,'Position':position,'Area':area,
+                    # 'EddyN':number,'Level':level}
+                    if diagnostics==True:
+                        plt.figure()
+                        plt.plot(eddz['Contour'][nn0,0],eddz['Contour'][nn0,1],'-r')
+                        plt.plot(eddys['Contour'][nn1,0],eddys['Contour'][nn1,1],'-b')
+                        plt.show()
+                        plt.close()
+                        print 'eddyN', nn1,nn0
+                        print 'eddyt1pos',eddyxlb,eddyylb
+                        print 'eddyt0pos',eddyxlt,eddyylt
+                        print 'area',arealb, arealt
+                elif (eddyxlb<=maxlon and eddyxlb>=minlon and eddyylb<=maxlat and eddyylb>=minlat) and\
+                (eddyxlt<=maxlon and eddyxlt>=minlon and eddyylt<=maxlat and eddyylt>=minlat):
+                    checklist1.append(eddys['EddyN'][nn1][0])
+                
+                
+                #elif(eddyxlb<=maxlon and eddyxlb>=minlon and eddyylb<=maxlat and eddyylb>=minlat) and\
+                #    (eddyxlt<=maxlon and eddyxlt>=minlon and eddyylt<=maxlat and eddyylt>=minlat):
+                    # dict_eddym(contour, ellipse, position,area,number,level)
+                    # {'Contour':contour,'Ellipse':ellipse,'Position':position,'Area':area,
+                    # 'EddyN':number,'Level':level}
+#        dict_eddym(contour_path, ellipse_path,position,area,total_eddy,level)
+        #print checklist
+        #print checklist1
+        
+        for nn1 in range(0,len(eddys['EddyN'])):
+            #print 'tr or fs',(eddys['EddyN'][nn1]!= checklist).all() and (eddys['EddyN'][nn1]!= checklist1).all()
+            #print 'eddyn',eddys['EddyN'][nn1]
+            if (eddys['EddyN'][nn1]!= checklist).all() and (eddys['EddyN'][nn1]!= checklist1).all():
+                #print 'test'
+                contour=list(contour)
+                contour.append(eddys['Contour'][nn1])
+                ellipse=list(ellipse)
+                ellipse.append(eddys['Ellipse'][nn1])
+                position=np.vstack((position,eddys['Position'][nn1]))
+                area=np.vstack((area,eddys['Area'][nn1]))
+                level=np.vstack((level,eddys['Level'][nn1]))
+                number=np.vstack((number,len(eddz['EddyN'])+1))
+
+        eddz={'Contour':contour,'Ellipse':ellipse,'Position':position,'Area':area,\
+              'EddyN':number,'Level':level}
+    return eddz

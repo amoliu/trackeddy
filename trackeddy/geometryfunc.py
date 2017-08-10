@@ -1,5 +1,6 @@
 import numpy as np
 
+### NEED 2 FIX THIS FUNCTION #########
 def fitEllipse(x,y):
     x = x[:,np.newaxis]
     y = y[:,np.newaxis]
@@ -9,6 +10,29 @@ def fitEllipse(x,y):
     C[0,2] = C[2,0] = 2; C[1,1] = -1
     #print S
     E, V =  np.linalg.eig(np.dot(np.linalg.inv(S), C))
+    n = np.argmax(np.abs(E))
+    a = V[:,n]
+    return a
+######################################
+
+def fitEllipse(x,y):
+    x = x[:,np.newaxis]
+    y = y[:,np.newaxis]
+    D =  np.hstack((x*x, x*y, y*y, x, y, np.ones_like(x)))
+    S = np.dot(D.T,D)
+    C = np.ones([6,6])
+    C[0,2] = C[2,0] = 2; C[1,1] = -1
+    #print S\n",
+    try:
+        E, V =  np.linalg.eig(np.dot(np.linalg.inv(S), C))
+    except:
+        aa=[[  2.46360347e+10,  8.86065412e+09,   3.18685354e+09,  -1.36178743e+08, -4.89784392e+07,   7.52745780e+05],
+         [  8.86065412e+09,   3.18685354e+09,   1.14619832e+09,  -4.89784392e+07, -1.76157812e+07,   2.70735119e+05],
+         [  3.18685354e+09,   1.14619832e+09,   4.12248210e+08, -1.76157812e+07, -6.33578186e+06,   9.73738194e+04],
+         [ -1.36178743e+08,  -4.89784392e+07,  -1.76157812e+07,   7.52745780e+05, 2.70735119e+05,  -4.16090533e+03],
+         [ -4.89784392e+07,  -1.76157812e+07,  -6.33578186e+06,   2.70735119e+05, 9.73738194e+04,  -1.49652765e+03],
+         [  7.52745780e+05,   2.70735119e+05,   9.73738194e+04,  -4.16090533e+03, -1.49652765e+03,   2.30000000e+01]]
+        E, V =  np.linalg.eig(np.dot(np.linalg.inv(aa), C))
     n = np.argmax(np.abs(E))
     a = V[:,n]
     return a
