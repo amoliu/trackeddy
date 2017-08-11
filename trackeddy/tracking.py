@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import numpy.ma as ma
 import pylab as plt
@@ -5,10 +6,15 @@ from datastruct import *
 from geometryfunc import *
 from init import *
 from physics import *
+from printfunc import *
 from mpl_toolkits.basemap import Basemap
-    
+import sys
+import time
+
+
+
 def exact_eddy(eddydt,lat,lon,data):
-    print 'Work in progress'
+    print('Work in progress')
     level=-80
     threshold=1
     for ct in range(0,len(eddytd['eddyn_1']['time'])):
@@ -64,17 +70,17 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
     contour_path=[]
     shapedata=np.shape(ssh)
     if ssh is ma.masked:
-        print 'Invalid ssh data, must be masked'
+        print('Invalid ssh data, must be masked')
         return
     if shapedata == [len(lat), len(lon)]:
-        print 'Invalid ssh data size, should be [length(lat) length(lon]'
+        print('Invalid ssh data size, should be [length(lat) length(lon]')
         return
     if np.shape(areamap) == shapedata:
         if np.shape(areamap) == [1, 1] | len(areamap) != len(lat):
-            print 'Invalid areamap, using NaN for eddy surface area'
+            print('Invalid areamap, using NaN for eddy surface area')
         return
     if len(levels)!= 2:
-        print 'Invalid len of levels, please use the function for multiple levels or use len(levels)==2'
+        print('Invalid len of levels, please use the function for multiple levels or use len(levels)==2')
         return
     #Saving mask for future post-processing.  
 
@@ -124,9 +130,9 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
     plt.close()
     CONTS=CS.allsegs[:][:]
     #Loop in contours of the levels defined.
-    print CS.levels
     total_contours=0
     eddyn=0
+    #levelprnt=0
     for ii in range(0,np.shape(CONTS)[0]):
         CONTSlvls=CONTS[ii]
         for jj in range(0,np.shape(CONTSlvls)[0]):
@@ -218,9 +224,11 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                         total_eddy=np.vstack((total_eddy,eddyn))
                         area=np.vstack((area,contarea))
                         if CS.levels[0] > 0:
-                            level=np.vstack((level,CS.levels[0]))
+                            levelprnt=CS.levels[0]
+                            level=np.vstack((level,levelprnt))
                         else:
-                            level=np.vstack((level,CS.levels[1]))
+                            levelprnt=CS.levels[1]
+                            level=np.vstack((level,levelprnt))
                     
                     eddyn=eddyn+1
                 if diagnostics == True:
@@ -271,6 +279,8 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                     plt.show()
                     plt.close()
             total_contours=total_contours+1
+        string='Total of contours was: %d - Total of eddies: %d - Level: %d   ' % (total_contours,eddyn,levelprnt)
+        pt =Printer(); pt.printtextoneline(string)
     contour_path=np.array(contour_path)
     ellipse_path=np.array(ellipse_path)
     possition=np.array(position)
@@ -278,7 +288,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
     eddys=dict_eddym(contour_path, ellipse_path,position,area,total_eddy,level)
 #    if destdir!='':
 #        save_data(destdir+'day'+str(date)+'_one_step_cont'+str(total_contours)+'.dat', variable)
-    print "The total of contours was", total_contours
+    
     return eddys
     
 def scan_eddyt(ssh,lat,lon,levels,date,areamap,destdir='',okparm='',diagnostics=False):
@@ -290,22 +300,20 @@ def scan_eddyt(ssh,lat,lon,levels,date,areamap,destdir='',okparm='',diagnostics=
     dates: A 1D array of the dates of ssh data, length should be equal to shape(ssh)[0] 
     destdir: destination directory to save eddies
     '''
-    #if destdir!='' or os.path.isdir(destdir)==False:
-    #    os.makedirs(directory)
     if len(np.shape(ssh))==3:
         if date==0:
-            print 'Please change the date to the number of iteratios you want'
+            print('Please change the date to the number of iteratios you want')
     else:
-        print 'Please use the other function scan_eddym'
+        print('Please use the other function scan_eddym')
         return
     for tt in range(0,date):
-        print "**********Starting iteration ",tt,"**********"
+        print("**********Starting iteration ",tt,"**********")
         eddys=scan_eddym(ssh[tt,:,:],lon,lat,levels,tt,areamap,destdir='',okparm=okparm,diagnostics=diagnostics)
         if tt==0:
             eddytd=dict_eddyt(tt,eddys)
         else:
             eddytd=dict_eddyt(tt,eddys,eddytd) 
-        print "**********Finished iteration ",tt,"**********"
+        print("**********Finished iteration ",tt,"**********")
     if destdir!='':
         save_data(destdir+str(date),eddies)
     return eddytd
@@ -321,8 +329,8 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,diagnostics=False):
     Author: Josue Martinez Moreno, 2017
     '''
     justeddy=np.zeros(np.shape(data))
+    print('*******Removing of eddies******')
     for key, value in eddydt.items():
-        print '*********Removing ',key,'*******'
         level=value['level']
         rct=value['time']
         lonmi=value['contour'][0].min()
@@ -340,11 +348,9 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,diagnostics=False):
         datacm=data[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
         
         if level > 0:
-            print datacm.max()
             datacm[datacm<=level]=0
             datacm[datacm>=1000]=0
         elif level < 0:
-            print datacm.min()
             datacm[datacm>=level]=0
             datacm[datacm<=-1000]=0
             
@@ -353,18 +359,13 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,diagnostics=False):
             plt.pcolormesh(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],datacm)
             plt.colorbar()
             cca=plt.contourf(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],datacm,alpha=0.5)
-            #plt.clabel(cca, fontsize=10, inline=1,colors='k')
             plot(value['contour'][0],value['contour'][1],'-m')
             plt.show()
-            #print lon[mimcx-threshold:mamcx+1+threshold].min(),lat[mimcy-threshold:mamcy+1+threshold].min()
-            #print lon[mimcx-threshold:mamcx+1+threshold].max(),lat[mimcy-threshold:mamcy+1+threshold].max()
             figure()
-            #print justeddy
             pcolormesh(justeddy)
-            #print justeddy.max(),justeddy.min()
             plt.show()
             plt.close()
             
         justeddy[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]=datacm
-            
+    print('*******End the Removing of eddies******')
     return justeddy

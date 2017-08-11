@@ -59,7 +59,6 @@ def dict_eddyt(ts,eddys,eddydt=''):
     Usage:
     
     '''
-    print('ts',ts)
     if ts==0 or eddydt=='':
         #Define the variable
         eddydt={'eddyn_'+str(eddys['EddyN'][0][0]):{'neddy':eddys['EddyN'][0],'time':ts,'position':eddys['Position'][0],\
@@ -72,17 +71,18 @@ def dict_eddyt(ts,eddys,eddydt=''):
                                                       'level':eddys['Level'][nn]}
     else:         
         for key, value in eddydt.items():
-            print key
+            #print key
             count_new=0
+            #print len(eddys['EddyN'])
             for nn in range(0,len(eddys['EddyN'])):
-                maxlon=eddys['Contour'][nn,0].max()
-                maxlone=eddys['Ellipse'][nn,0].max()
-                maxlat=eddys['Contour'][nn,1].max()
-                maxlate=eddys['Ellipse'][nn,1].max()
-                minlon=eddys['Contour'][nn,0].min()
-                minlone=eddys['Ellipse'][nn,0].min()
-                minlat=eddys['Contour'][nn,1].min()
-                minlate=eddys['Ellipse'][nn,1].min()
+                maxlon=eddys['Contour'][nn][0].max()
+                maxlone=eddys['Ellipse'][nn][0].max()
+                maxlat=eddys['Contour'][nn][1].max()
+                maxlate=eddys['Ellipse'][nn][1].max()
+                minlon=eddys['Contour'][nn][0].min()
+                minlone=eddys['Ellipse'][nn][0].min()
+                minlat=eddys['Contour'][nn][1].min()
+                minlate=eddys['Ellipse'][nn][1].min()
                 area=eddys['Area'][nn]
                 if len(np.shape(value['position']))<2:
                     eddyxt0=value['position'][0]
@@ -111,7 +111,7 @@ def dict_eddyt(ts,eddys,eddydt=''):
                 #if (value['neddy']==eddys['EddyN'][nn]):
                     #print 'number',nn,'max',maxlon,'t0',eddyxt0,'t1',eddyxt1,'min',minlon,'area0',areae,'area1',area
                     #print nn,maxlat,eddyyt0,eddyyt1,minlat
-                    print "****Tracking Eddy"+str(nn)+"****"
+                    #print "****Tracking Eddy"+str(nn)+"****"
                     number=value['neddy']
                     time=value['time']
                     #print 'Time '+str(time.append(ts))+str(type(time))
@@ -128,7 +128,7 @@ def dict_eddyt(ts,eddys,eddydt=''):
                 else:
                     count_new=count_new+1
                     if count_new==len(eddys['EddyN']):
-                        print '*****New Eddy*****'
+                        #print '*****New Eddy*****'
                         eddydt['eddyn_'+str(eddys['EddyN'][nn])]={'neddy':eddys['EddyN'][nn],'time':ts,\
                                             'position':eddys['Position'][nn],'area':eddys['Area'][nn],\
                                             'ellipse':eddys['Ellipse'][nn],\
@@ -149,7 +149,6 @@ def dict_eddyz(ts,ll,minlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
     Usage:
     
     '''
-    print('Level analized',ll)
     if ll==minlevel or eddz=='':
         eddz=eddys
     else:         
@@ -186,10 +185,6 @@ def dict_eddyz(ts,ll,minlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
                 if (eddyxlb<=maxlon and eddyxlb>=minlon and eddyylb<=maxlat and eddyylb>=minlat) and\
                 (eddyxlt<=maxlon and eddyxlt>=minlon and eddyylt<=maxlat and eddyylt>=minlat) and\
                 (arealt>=arealb/threshold and arealt<=arealb):
-                    print 'Contour is growing'
-                    
-                    
-                    #print contour[nn1]
                     contour[nn0]=eddys['Contour'][nn1]
                     ellipse[nn0]=eddys['Ellipse'][nn1]
                     position[nn0]=eddys['Position'][nn1]
@@ -200,6 +195,7 @@ def dict_eddyz(ts,ll,minlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
                     #eddz={'Contour':contour,'Ellipse':ellipse,'Position':position,'Area':area,
                     # 'EddyN':number,'Level':level}
                     if diagnostics==True:
+                        print 'Contour is growing'
                         plt.figure()
                         plt.plot(eddz['Contour'][nn0,0],eddz['Contour'][nn0,1],'-r')
                         plt.plot(eddys['Contour'][nn1,0],eddys['Contour'][nn1,1],'-b')

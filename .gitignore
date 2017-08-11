@@ -110,4 +110,5 @@ data.output/
 
 # Git
 .gitignore
+*_bk.ipynb
 *.ipynb_bk
