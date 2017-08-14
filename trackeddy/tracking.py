@@ -42,7 +42,7 @@ def exact_eddy(eddydt,lat,lon,data):
 # Track eddy script used to update and remove bugs, It should be the same as the trackeddy.py file.
 
 
-def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',basemap=False,diagnostics=False):
+def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',basemap=False,diagnostics=False,pprint=True):
     '''
     *************Scan Eddym***********
     Function to identify each eddy using closed contours,
@@ -178,7 +178,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                             #print 'Removing contour, thisone is really underestimate'
                             check=False
                         else:
-                            if ellipsarea < 400 or contarea<400:
+                            if ellipsarea < 200 and contarea < 200:
                                 #print 'Saving contour in path:'
                                 check=True
                             else:
@@ -188,7 +188,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                             #print 'Removing contour, thisone is really overestimate'
                             check=False
                         elif eccen<0.99 and eccen>0.6:
-                            if ellipsarea < 400 or contarea<400:
+                            if ellipsarea < 200 and contarea<200:
                             #print 'Saving contour in path:'
                                 check=True
                             else:
@@ -198,6 +198,8 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                             check=False
                     else:
                         check=False
+                #print(CONTeach[:,0],CONTeach[:,1])
+                #print('hola', np.shape(contour_path))
                 if diagnostics == True and  check == True:
                     print("Ellipse parameters")
                     print("center = ",  center)
@@ -219,6 +221,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                             level=CS.levels[0]
                         else:
                             level=CS.levels[1]
+                        levelprnt=level
                     else:
                         position=np.vstack((position,center))
                         total_eddy=np.vstack((total_eddy,eddyn))
@@ -279,13 +282,14 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                     plt.show()
                     plt.close()
             total_contours=total_contours+1
-        string='Total of contours was: %d - Total of eddies: %d - Level: %d   ' % (total_contours,eddyn,levelprnt)
-        pt =Printer(); pt.printtextoneline(string)
+        if pprint==True:
+            string='Total of contours was: %d - Total of eddies: %d - Level: %.1f   ' % (total_contours,eddyn,levelprnt)
+            pt =Printer(); pt.printtextoneline(string)
     contour_path=np.array(contour_path)
     ellipse_path=np.array(ellipse_path)
     possition=np.array(position)
     level=np.array(level)
-    eddys=dict_eddym(contour_path, ellipse_path,position,area,total_eddy,level)
+    eddys=dict_eddym(contour_path,ellipse_path,position,area,total_eddy,level)
 #    if destdir!='':
 #        save_data(destdir+'day'+str(date)+'_one_step_cont'+str(total_contours)+'.dat', variable)
     
@@ -369,3 +373,48 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,diagnostics=False):
         justeddy[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]=datacm
     print('*******End the Removing of eddies******')
     return justeddy
+
+def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',areamap='',mask='',destdir='',okparm='',diagnostics=False,pprint=False):
+    '''
+    *************Analys eddy in z and t ***********
+    Function to identify each eddy using closed contours, 
+    moving in time and contour levels
+    Usage:
+    
+    Example:
+
+    Author: Josue Martinez Moreno, 2017
+    '''
+    if len(np.shape(data))<3:
+        print('The data need to have 3d [i.e. data(t,x,y)]')
+        return
+    if areamap=='':
+        areamap=np.array([[0,len(x)],[0,len(y)]])
+    if mask == '':
+        mask=ma.getmask(data[0,:,:])
+        
+    pp =  Printer(); 
+    for ii in range(t0,t1,tstep):
+        levellist=np.flipud(np.arange(minlevel,maxlevel+dzlevel,dzlevel))
+        if data_meant=='':
+            print('Be sure the data is an anomaly')
+            dataanomaly=data
+        else:
+            dataanomaly=data[ii,:,:]-data_meant
+        for ll in levellist:
+            if minlevel<0 and maxlevel<0:
+                levels=[-500,ll]
+            elif minlevel>0 and maxlevel>0:
+                levels=[ll,500]
+            eddies=scan_eddym(dataanomaly,x,y,levels,ii,areamap,mask=mask,destdir=destdir\
+                          ,okparm=okparm,diagnostics=diagnostics,pprint=pprint)
+            if ll == maxlevel:
+                eddz = dict_eddyz(ii,ll,maxlevel,eddies,diagnostics=diagnostics)
+            else:
+                eddz = dict_eddyz(ii,ll,maxlevel,eddies,eddz,diagnostics=diagnostics)
+        if ii==0:
+            eddytd=dict_eddyt(ii,eddz)
+        else:
+            eddytd=dict_eddyt(ii,eddz,eddytd) 
+        pp.timepercentprint(t0,t1,tstep,ii)
+    return eddytd
