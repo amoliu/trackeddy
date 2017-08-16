@@ -9,7 +9,7 @@ This code will let you identify and track any normal shape in a 2D space. The pr
 # Beta Fase Release:
 Now the source code supports the extraction of eddies each time step and moving in Z. Some bugs need to be fixed but right now it can be implemented in some data analysis.
 
-![Alt Text](https://github.com/Josue-Martinez-Moreno/trackeddy/blob/master/output/eddy_removal.png "Extraction off eddies in the Southern Ocean [Data provided by Adele Morrison].")
+![Alt Text](https://github.com/Josue-Martinez-Moreno/trackeddy/blob/master/output/eddy_removal.jpg "Extraction off eddies in the Southern Ocean [Data provided by Adele Morrison].")
 
 ## To get the code
 
