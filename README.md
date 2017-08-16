@@ -1,5 +1,5 @@
 # TrackEddy (Eddy Identification Algorithm)
-
+**Supports Python 2.7 and Python 3**
 This code will let you identify and track any normal shape in a 2D space. The principal objective of this development is finding and tracking all the eddies in the ocean. 
 
 ![Alt Text](https://github.com/Josue-Martinez-Moreno/trackeddy/blob/master/output/eddyn_13.gif "Eddy trajectory in the Souther Ocean")
@@ -41,4 +41,10 @@ Work in progress!
 
 ## To learn more about the module TrackEddy
 
+Work in progress!
+
+### References:
+* Faghmous, J. H., Frenger, I., Yao, Y., Warmka, R., Lindell, A., & Kumar, V. (2015). A daily global mesoscale ocean eddy dataset from satellite altimetry. Scientific data, 2.
+* Chang, Y. L., & Oey, L. Y. (2014). Analysis of STCC eddies using the Okubo–Weiss parameter on model and satellite data. Ocean Dynamics, 64(2), 259-271.
+* Chelton, D. B., Schlax, M. G., Samelson, R. M., & de Szoeke, R. A. (2007). Global observations of large oceanic eddies. Geophysical Research Letters, 34(15).
 Work in progress!

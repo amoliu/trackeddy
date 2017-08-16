@@ -20,10 +20,10 @@ def vorticity(u,v,z):
     return w
 
 def geostrophicssh(eta,lat,lon):
-    print 'Work in progress'
+    print('Work in progress')
 
 def EkE(eta,u,v):
-    print 'Work in progress'
+    print('Work in progress')
     
 def PVort(S,T,P,U,V):
     theta=np.zeros(np.shape(S))

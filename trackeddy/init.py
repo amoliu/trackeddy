@@ -16,4 +16,4 @@ def arkbinterpmom5(tracer,vel_u,vel_v,lont,latt,lonu,latu):
     lonu=Longitude coordinate of velocity field grid
     latu=Latitude coordinate of velocity field grid
     '''
-    print '***********Interp 4 Arakawa B************'
+    print('***********Interp 4 Arakawa B************')

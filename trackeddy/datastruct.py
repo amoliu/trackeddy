@@ -2,9 +2,11 @@ import numpy as np
 import netCDF4 as nc4
 from datetime import datetime
 import pylab as plt
+import warnings
+warnings.filterwarnings("ignore")
 
 def eddync():
-    print 'Work in progress'
+    print('Work in progress')
     
 def vargeonc(filename,lat,lon,var,tt,varname,nc_description='',units='',dt='',dim='2D'):
     f = nc4.Dataset(filename,'w', format='NETCDF4')
@@ -70,8 +72,9 @@ def dict_eddyt(ts,eddys,eddydt=''):
             eddydt['eddyn_'+str(eddys['EddyN'][nn][0])]={'neddy':eddys['EddyN'][nn],'time':ts,'position':eddys['Position'][nn],\
                     'area':eddys['Area'][nn],'ellipse':eddys['Ellipse'][nn],'contour':eddys['Contour'][nn],\
                                                       'level':eddys['Level'][nn]}
-    else:         
-        for key, value in eddydt.items():
+    else: 
+        checklist=[]
+        for key, value in list(eddydt.items()):
             #print key
             count_new=0
             #print len(eddys['EddyN'])
@@ -104,11 +107,12 @@ def dict_eddyt(ts,eddys,eddydt=''):
                 #    eddyxt1=eddys['Position'][nn][0]
                 #    eddyyt1=eddys['Position'][nn][1]
 #                print dir(value)
-                #print value['time'],timee,ts
+                #print (ts-int(timee))<5,int(timee)!=ts
                 if (eddyxt1<=maxlon and eddyxt1>=minlon and eddyyt1<=maxlat and eddyyt1>=minlat) and\
                     (eddyxt0<=maxlon and eddyxt0>=minlon and eddyyt0<=maxlat and eddyyt0>=minlat) and\
                     (areae<=area+area/4 and areae>=area-area/4) and (eddyxt1!=eddyxt0 and eddyyt1!=eddyyt0)\
-                    and (int(timee)-ts)>5 and int(timee)!=ts :
+                    and int(timee)!=ts and (ts-int(timee))<5:# 
+                    
                 #if (value['neddy']==eddys['EddyN'][nn]):
                     #print 'number',nn,'max',maxlon,'t0',eddyxt0,'t1',eddyxt1,'min',minlon,'area0',areae,'area1',area
                     #print nn,maxlat,eddyyt0,eddyyt1,minlat
@@ -120,20 +124,35 @@ def dict_eddyt(ts,eddys,eddydt=''):
                     position=value['position']
                     ellipse=value['ellipse']
                     contour=value['contour']
+                    level= value['level']
+                    if isinstance(number, np.float64) or isinstance(number, np.int64):
+                        number = number
+                    else: 
+                        number = number[0]
+                    #print(type(number))
+                    #print(number)
                     eddydt['eddyn_'+str(number)]={'neddy':number,'time':np.vstack((time,ts)),\
                                             'position':np.vstack((position,eddys['Position'][nn])),\
                                             'area':np.vstack((areae,area)),\
                                             'ellipse':np.vstack((ellipse,eddys['Ellipse'][nn])),\
                                             'contour':np.vstack((contour,eddys['Contour'][nn])),\
                                             'level':np.vstack((level,eddys['Level'][nn]))}
-                else:
-                    count_new=count_new+1
-                    if count_new==len(eddys['EddyN']):
-                        #print '*****New Eddy*****'
-                        eddydt['eddyn_'+str(eddys['EddyN'][nn])]={'neddy':eddys['EddyN'][nn],'time':ts,\
-                                            'position':eddys['Position'][nn],'area':eddys['Area'][nn],\
-                                            'ellipse':eddys['Ellipse'][nn],\
-                                            'contour':eddys['Contour'][nn],'level':eddys['Level'][nn]}
+                    checklist.append(number)
+        #print(checklist)
+        for nn in range(0,len(eddys['EddyN'])):
+                #else:
+                #    count_new=count_new+1
+            if (eddys['EddyN'][nn]!=checklist).all():
+                #print '*****New Eddy*****'
+                if isinstance(number, np.float64) or isinstance(number, np.int64):
+                    number = eddys['EddyN'][nn]
+                else: 
+                    number = eddys['EddyN'][nn][0]
+                print('number',str(number))
+                eddydt['eddyn_'+str(number)]={'neddy':number,'time':ts,\
+                                    'position':eddys['Position'][nn],'area':eddys['Area'][nn],\
+                                    'ellipse':eddys['Ellipse'][nn],\
+                                    'contour':eddys['Contour'][nn],'level':eddys['Level'][nn]}
         #eddydt={'eddyn'+str(eddys['EddyN']):{'time':ts,'position':eddys['Position'],'ellipse':eddys['Ellipse']\
 #                                    ,'contour':eddys['Contour']}}
     #print eddydt
@@ -198,16 +217,16 @@ def dict_eddyz(ts,ll,maxlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
                     #eddz={'Contour':contour,'Ellipse':ellipse,'Position':position,'Area':area,
                     # 'EddyN':number,'Level':level}
                     if diagnostics==True:
-                        print 'Contour is growing'
+                        print('Contour is growing')
                         plt.figure()
                         plt.plot(eddz['Contour'][nn0,0],eddz['Contour'][nn0,1],'-r')
                         plt.plot(np.squeeze(eddys['Contour'])[0],np.squeeze(eddys['Contour'])[1],'-b')
                         plt.show()
                         plt.close()
-                        print 'eddyN',nn0
-                        print 'eddyt1pos',eddyxlb,eddyylb
-                        print 'eddyt0pos',eddyxlt,eddyylt
-                        print 'area',arealb, arealt
+                        print('eddyN',nn0)
+                        print('eddyt1pos',eddyxlb,eddyylb)
+                        print('eddyt0pos',eddyxlt,eddyylt)
+                        print('area',arealb, arealt)
                 elif (eddyxlb<=maxlon and eddyxlb>=minlon and eddyylb<=maxlat and eddyylb>=minlat) and\
                 (eddyxlt<=maxlon and eddyxlt>=minlon and eddyylt<=maxlat and eddyylt>=minlat):
                     checklist1.append(eddys['EddyN'])
@@ -258,16 +277,16 @@ def dict_eddyz(ts,ll,maxlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
                         #eddz={'Contour':contour,'Ellipse':ellipse,'Position':position,'Area':area,
                         # 'EddyN':number,'Level':level}
                         if diagnostics==True:
-                            print 'Contour is growing'
+                            print('Contour is growing')
                             #plt.figure()
                             #plt.plot(eddz['Contour'][nn0,0],eddz['Contour'][nn0,1],'-r')
                             #plt.plot(eddys['Contour'][nn1,0],eddys['Contour'][nn1,1],'-b')
                             #plt.show()
                             #plt.close()
-                            print 'eddyN', nn1,nn0
-                            print 'eddyt1pos',eddyxlb,eddyylb
-                            print 'eddyt0pos',eddyxlt,eddyylt
-                            print 'area',arealb, arealt
+                            print('eddyN', nn1,nn0)
+                            print('eddyt1pos',eddyxlb,eddyylb)
+                            print('eddyt0pos',eddyxlt,eddyylt)
+                            print('area',arealb, arealt)
                     elif (eddyxlb<=maxlon and eddyxlb>=minlon and eddyylb<=maxlat and eddyylb>=minlat) and\
                     (eddyxlt<=maxlon and eddyxlt>=minlon and eddyylt<=maxlat and eddyylt>=minlat):
                         checklist1.append(eddys['EddyN'][nn1][0])

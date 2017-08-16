@@ -16,6 +16,6 @@ class Printer():
         sys.stdout.flush()
         
     def timepercentprint(self,minv,maxv,step,i):
-        sys.stdout.write("\r 0% [{0}>]{1}% Time Elapsed: {2} s  ".format("="*int(i),(float(i+1)/maxv)*100.0,round((time.clock()-self.tic))))
+        sys.stdout.write("\r 0% [{0}>]{1}% Time Elapsed: {2} s  ".format("="*int(i),round((float(i+1)/maxv)*100.0),round((time.clock()-self.tic))))
         sys.stdout.flush()
             

@@ -2,11 +2,11 @@ from __future__ import print_function
 import numpy as np
 import numpy.ma as ma
 import pylab as plt
-from datastruct import *
-from geometryfunc import *
-from init import *
-from physics import *
-from printfunc import *
+from trackeddy.datastruct import *
+from trackeddy.geometryfunc import *
+from trackeddy.init import *
+from trackeddy.physics import *
+from trackeddy.printfunc import *
 from mpl_toolkits.basemap import Basemap
 import sys
 import time
@@ -395,7 +395,11 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
         
     pp =  Printer(); 
     for ii in range(t0,t1,tstep):
-        levellist=np.flipud(np.arange(minlevel,maxlevel+dzlevel,dzlevel))
+        levellist=np.arange(minlevel,maxlevel+dzlevel,dzlevel)
+        farlevel=levellist[0]
+        if abs(levellist)[0]<abs(levellist)[-1]:
+            levellist=np.flipud(levellist)
+            farlevel=levellist[0]
         if data_meant=='':
             print('Be sure the data is an anomaly')
             dataanomaly=data
@@ -408,13 +412,54 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
                 levels=[ll,500]
             eddies=scan_eddym(dataanomaly,x,y,levels,ii,areamap,mask=mask,destdir=destdir\
                           ,okparm=okparm,diagnostics=diagnostics,pprint=pprint)
-            if ll == maxlevel:
-                eddz = dict_eddyz(ii,ll,maxlevel,eddies,diagnostics=diagnostics)
+            if ll == farlevel:
+                eddz = dict_eddyz(ii,ll,farlevel,eddies,diagnostics=diagnostics)
             else:
-                eddz = dict_eddyz(ii,ll,maxlevel,eddies,eddz,diagnostics=diagnostics)
+                eddz = dict_eddyz(ii,ll,farlevel,eddies,eddz,diagnostics=diagnostics)
         if ii==0:
             eddytd=dict_eddyt(ii,eddz)
         else:
             eddytd=dict_eddyt(ii,eddz,eddytd) 
+        pp.timepercentprint(t0,t1,tstep,ii)
+    return eddytd
+
+def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',destdir='',okparm='',diagnostics=False,pprint=False):
+    '''
+    *************Analys eddy in z and t ***********
+    Function to identify each eddy using closed contours, 
+    moving in time and contour levels
+    Usage:
+    
+    Example:
+
+    Author: Josue Martinez Moreno, 2017
+    '''
+    if len(np.shape(data))<3:
+        print('The data need to have 3d [i.e. data(t,x,y)]')
+        return
+    if areamap=='':
+        areamap=np.array([[0,len(x)],[0,len(y)]])
+    if mask == '':
+        mask=ma.getmask(data[0,:,:])
+        
+    pp =  Printer(); 
+    for ii in range(t0,t1,tstep):
+        if data_meant=='':
+            print('Be sure the data is an anomaly')
+            dataanomaly=data[ii,:,:]
+        else:
+            dataanomaly=data[ii,:,:]-data_meant
+        #Levels to Analyse, note that one of them is an extreme value,
+        #This is because we don't want interference from any other contour.
+        if level<0:
+            levels=[-500,level]
+        elif level>0:
+            levels=[level,500]
+        eddies=scan_eddym(dataanomaly,x,y,levels,ii,areamap,mask=mask,destdir=destdir\
+                      ,okparm=okparm,diagnostics=diagnostics,pprint=pprint)
+        if ii==0:
+            eddytd=dict_eddyt(ii,eddies)
+        else:
+            eddytd=dict_eddyt(ii,eddies,eddytd) 
         pp.timepercentprint(t0,t1,tstep,ii)
     return eddytd
