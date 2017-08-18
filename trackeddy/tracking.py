@@ -42,7 +42,7 @@ def exact_eddy(eddydt,lat,lon,data):
 # Track eddy script used to update and remove bugs, It should be the same as the trackeddy.py file.
 
 
-def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',basemap=False,diagnostics=False,pprint=True):
+def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',basemap=False,eddycenter='maximum',diagnostics=False,pprint=True):
     '''
     *************Scan Eddym***********
     Function to identify each eddy using closed contours,
@@ -137,7 +137,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
         CONTSlvls=CONTS[ii]
         for jj in range(0,np.shape(CONTSlvls)[0]):
             CONTeach=CONTSlvls[jj]
-            if (len(CONTeach[:,0]) | len(CONTeach[:,1])) <= 20:
+            if (len(CONTeach[:,0]) | len(CONTeach[:,1])) <= 10:
                 #print 'Singular index I cant get an ellipse with this data'
                 xx=np.nan
                 yy=np.nan
@@ -174,20 +174,25 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                     check=False
                 else:
                     if contarea>ellipsarea:
+                        #### **** 17 august I changed 1.5 to 1.5 line 178 and 188 **** ####
                         if contarea/1.5>ellipsarea:
                             #print 'Removing contour, thisone is really underestimate'
                             check=False
-                        else:
+                        elif eccen<0.95 and eccen>0:
                             if ellipsarea < 200 and contarea < 200:
                                 #print 'Saving contour in path:'
                                 check=True
                             else:
                                 check=False
+                        else:
+                            check=False
                     elif contarea<ellipsarea:
                         if contarea<ellipsarea/1.5:
                             #print 'Removing contour, thisone is really overestimate'
                             check=False
-                        elif eccen<0.99 and eccen>0.6:
+                        #elif eccen<0.95 and eccen>0.4:
+                        #### **** 17 august I constraint more the eccen lines 181 and 195 **** ####   
+                        elif eccen<0.95 and eccen>0:
                             if ellipsarea < 200 and contarea<200:
                             #print 'Saving contour in path:'
                                 check=True
@@ -202,7 +207,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                 #print('hola', np.shape(contour_path))
                 if diagnostics == True and  check == True:
                     print("Ellipse parameters")
-                    print("center = ",  center)
+                    print("Ellipse center = ",  center)
                     print("angle of rotation = ",  phi)
                     print("axes (a,b) = ", axes)
                     print("Eccentricity = ",eccen)
@@ -213,6 +218,14 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                     ellipse_path.append([xx,yy])
                     contour_path.append([CONTeach[:,0],CONTeach[:,1]])
                     #print shape(contour_path)
+                    #print(center)
+                    #Switch from the ellipse center to the position of the maximum value inside de contour
+                    if eddycenter == 'maximum':
+                        center=contourmaxvalue(CONTeach[:,0],CONTeach[:,1],sshnan,lon,lat,levels,date)
+                    elif eddycenter == 'masscenter':
+                        print('Still in development! Sorry :(')
+                        center=contourmaxvalue(CONTeach[:,0],CONTeach[:,1],sshnan,lon,lat,levels,date)
+                    #print(center)
                     if eddyn==0:
                         position=center
                         total_eddy=eddyn
@@ -322,7 +335,7 @@ def scan_eddyt(ssh,lat,lon,levels,date,areamap,destdir='',okparm='',diagnostics=
         save_data(destdir+str(date),eddies)
     return eddytd
 
-def exeddy(eddydt,lat,lon,data,ct,threshold,diagnostics=False):
+def exeddy(eddydt,lat,lon,data,ct,threshold,inside='',diagnostics=False):
     '''*************Extract Eddy***********
     Function to extract each eddy using closed contours.
     Usage:
@@ -348,25 +361,35 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,diagnostics=False):
 
         if mimcx==0:
             mimcx=1
-
-        datacm=data[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
-        
-        if level > 0:
-            datacm[datacm<=level]=0
-            datacm[datacm>=1000]=0
-        elif level < 0:
-            datacm[datacm>=level]=0
-            datacm[datacm<=-1000]=0
+        if inside == '':
+            datacm=data[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
+            if level > 0:
+                datacm[datacm<=level]=0
+                datacm[datacm>=1000]=0
+            elif level < 0:
+                datacm[datacm>=level]=0
+                datacm[datacm<=-1000]=0
+        else:
+            datacm=data[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
+            insidecm=inside[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
+            if level > 0:
+                insidecm[insidecm<=level]=0
+                insidecm[insidecm>=level]=1
+            elif level < 0:
+                insidecm[insidecm>=level]=0
+                insidecm[insidecm<=level]=1
+            datacm=datacm*insidecm
             
         if diagnostics==True:
             plt.figure()
             plt.pcolormesh(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],datacm)
+            plt.contourf(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],insidecm)
             plt.colorbar()
             cca=plt.contourf(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],datacm,alpha=0.5)
-            plot(value['contour'][0],value['contour'][1],'-m')
+            plt.plot(value['contour'][0],value['contour'][1],'-m')
             plt.show()
-            figure()
-            pcolormesh(justeddy)
+            plt.figure()
+            plt.pcolormesh(justeddy)
             plt.show()
             plt.close()
             
@@ -386,12 +409,15 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
     Author: Josue Martinez Moreno, 2017
     '''
     if len(np.shape(data))<3:
-        print('The data need to have 3d [i.e. data(t,x,y)]')
-        return
+        print('If you whant to analyze in time the data need to be 3d [i.e. data(t,x,y)]')
+        #return
     if areamap=='':
         areamap=np.array([[0,len(x)],[0,len(y)]])
     if mask == '':
-        mask=ma.getmask(data[0,:,:])
+        if len(np.shape(data))<3:
+            mask=ma.getmask(data[:,:])
+        else:
+            mask=ma.getmask(data[0,:,:])
         
     pp =  Printer(); 
     for ii in range(t0,t1,tstep):
@@ -436,11 +462,14 @@ def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',dest
     '''
     if len(np.shape(data))<3:
         print('The data need to have 3d [i.e. data(t,x,y)]')
-        return
+        #return
     if areamap=='':
         areamap=np.array([[0,len(x)],[0,len(y)]])
     if mask == '':
-        mask=ma.getmask(data[0,:,:])
+        if len(np.shape(data))<3:
+            mask=ma.getmask(data[:,:])
+        else:
+            mask=ma.getmask(data[0,:,:])
         
     pp =  Printer(); 
     for ii in range(t0,t1,tstep):

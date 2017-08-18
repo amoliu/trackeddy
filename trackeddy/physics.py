@@ -13,11 +13,18 @@ def okuboweissparm(u,v,z):
     owparm=sn**2+ss**2-w**2
     return owparm
     
-def vorticity(u,v,z):
-    dv_x=np.gradient(v[z,:,:],axis=1)
-    du_y=np.gradient(u[z,:,:],axis=0)
+def vorticity2D(u,v):
+    dv_x=np.gradient(v[:,:],axis=1)
+    du_y=np.gradient(u[:,:],axis=0)
     w=dv_x-du_y
     return w
+
+    
+#def vorticity3D(u,v,w,z):
+#    dv_x=np.gradient(v[z,:,:],axis=1)
+#    du_y=np.gradient(u[z,:,:],axis=0)
+#    w=dv_x-du_y
+#    return w
 
 def geostrophicssh(eta,lat,lon):
     print('Work in progress')

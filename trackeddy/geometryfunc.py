@@ -81,3 +81,24 @@ def find2d(arrayx,arrayy,valuex,valuey):
 def find(array,value):
     idx=(np.abs(array-value)).argmin()
     return idx
+
+def contourmaxvalue(contcoordx,contcoordy,var,x,y,levels,date):
+    idxcheckmax,idycheckmax=find2d(x,y,contcoordx.max(),contcoordy.max())
+    idxcheckmin,idycheckmin=find2d(x,y,contcoordx.min(),contcoordy.min())
+    #print(idycheckmin,idycheckmax,idxcheckmin,idxcheckmax)
+    if len(np.shape(var))==3:
+        if levels[0]>0:
+            sshextrem=np.nanmax(var[date,idycheckmin:idycheckmax,idxcheckmin:idxcheckmax])
+        else:
+            sshextrem=np.nanmin(var[date,idycheckmin:idycheckmax,idxcheckmin:idxcheckmax])
+        indexes=np.where(var[date,idycheckmin:idycheckmax,idxcheckmin:idxcheckmax]==sshextrem)
+    else:
+        #print(np.shape(var[idycheckmin:idycheckmax,idxcheckmin:idxcheckmax]))
+        if levels[0]>0:
+            sshextrem=np.nanmax(var[idycheckmin:idycheckmax,idxcheckmin:idxcheckmax])
+        else:
+            sshextrem=np.nanmin(var[idycheckmin:idycheckmax,idxcheckmin:idxcheckmax])
+        #print(sshextrem)
+        indexes=np.where(var[idycheckmin:idycheckmax,idxcheckmin:idxcheckmax]==sshextrem)
+    coord=[x[idxcheckmin+indexes[1][0]],y[idycheckmin+indexes[0][0]]]
+    return coord
