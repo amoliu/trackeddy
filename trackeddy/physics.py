@@ -26,8 +26,31 @@ def vorticity2D(u,v):
 #    w=dv_x-du_y
 #    return w
 
-def geostrophicssh(eta,lat,lon):
-    print('Work in progress')
+def geovelfield(ssha,lon,lat):
+    distmlon=sw.dist(0,lon,'km')[0][:]*1000
+    distmlat=sw.dist(0,lat,'km')[0][:]*1000
+    mlon=np.cumsum(distmlon)
+    mlat=np.cumsum(distmlat)
+    dy=np.gradient(mlat)
+    dx=np.gradient(mlon)
+    detay,detax=np.gradient(ssha)
+    omega = 7.2921e-5
+    g=9.81
+    f=2*omega*np.sin(np.deg2rad(lat))
+    u=zeros(np.shape(ssh))
+    v=zeros(np.shape(ssh))
+    for ii in range(np.shape(ssh)[1]-1):
+        detaxdy=detax[:,ii]/dx[ii]
+        v[:,ii]=(g/f)*(detaxdy)
+    for jj in range(np.shape(ssh)[0]-1):
+        detaydx=detay[jj,:]/dy[jj]
+        u[jj,:]=-(g/f[jj])*(detaydx)
+    u[u>1000]=0
+    v[v>1000]=0
+    u[u<-1000]=0
+    v[v<-1000]=0
+    return u,v
+
 
 def EkE(eta,u,v):
     print('Work in progress')
@@ -41,3 +64,4 @@ def PVort(S,T,P,U,V):
     omega=7.2921159*10**(-5)
     zeta=2*omega+curl(U,V)
     Q=(1/rho)*(zeta)*np.gradient(theta)
+    
