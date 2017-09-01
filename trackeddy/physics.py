@@ -1,23 +1,50 @@
 import numpy as np
 import seawater as sw
 from sympy.physics.vector import curl
+import numpy.ma as ma
 
-def okuboweissparm(u,v,z):
-    du_x=np.gradient(u[z,:,:],axis=1)
-    dv_x=np.gradient(v[z,:,:],axis=1)
-    du_y=np.gradient(u[z,:,:],axis=0)
-    dv_y=np.gradient(v[z,:,:],axis=0)
-    sn=du_x-dv_y
-    ss=dv_x+du_y
+def okuboweissparm(u,v,lat,lon,z):
+    du=np.gradient(u[z,:,:],axis=1)
+    dv=np.gradient(v[z,:,:],axis=1)
+    du=np.gradient(u[z,:,:],axis=0)
+    dv=np.gradient(v[z,:,:],axis=0)
+    distmlon=sw.dist(0,lon,'km')[0][:]*1000
+    distmlat=sw.dist(0,lat,'km')[0][:]*1000
+    mlon=np.cumsum(distmlon)
+    mlat=np.cumsum(distmlat)
+    mlon = np.hstack((mlon,mlon[-1]))
+    mlat = np.hstack((mlat,mlat[-1]))
+    dy=np.gradient(mlat)
+    dx=np.gradient(mlon)
+    dX,dY = np.meshgrid(dx,dy)
+    
+    du_dx=du/dX
+    du_dy=du/dY
+    dv_dx=dv/dX
+    dv_dy=dv/dY
+    sn=du_dx-dv_dy
+    ss=dv_dx+du_dy
     w=vorticity(u,v,z)
     owparm=sn**2+ss**2-w**2
     return owparm
     
-def vorticity2D(u,v):
-    dv_x=np.gradient(v[:,:],axis=1)
-    du_y=np.gradient(u[:,:],axis=0)
-    w=dv_x-du_y
+def vorticity2D(u,v,lon,lat):
+    dv=np.gradient(v[:,:],axis=1)
+    du=np.gradient(u[:,:],axis=0)
+    distmlon=sw.dist(0,lon,'km')[0][:]*1000
+    distmlat=sw.dist(0,lat,'km')[0][:]*1000
+    mlon=np.cumsum(distmlon)
+    mlat=np.cumsum(distmlat)
+    mlon = np.hstack((mlon,mlon[-1]))
+    mlat = np.hstack((mlat,mlat[-1]))
+    dy=np.gradient(mlat)
+    dx=np.gradient(mlon)
+    dX,dY = np.meshgrid(dx,dy)
+    dv_dx=dv/dX
+    du_dy=du/dY
+    w=dv_dx-du_dy    
     return w
+
 
     
 #def vorticity3D(u,v,w,z):
@@ -26,7 +53,8 @@ def vorticity2D(u,v):
 #    w=dv_x-du_y
 #    return w
 
-def geovelfield(ssha,lon,lat):
+def geovelfield(ssha,lon,lat,mask):
+    ma.filled(ssha,np.nan)
     distmlon=sw.dist(0,lon,'km')[0][:]*1000
     distmlat=sw.dist(0,lat,'km')[0][:]*1000
     mlon=np.cumsum(distmlon)
@@ -37,23 +65,27 @@ def geovelfield(ssha,lon,lat):
     omega = 7.2921e-5
     g=9.81
     f=2*omega*np.sin(np.deg2rad(lat))
-    u=zeros(np.shape(ssh))
-    v=zeros(np.shape(ssh))
-    for ii in range(np.shape(ssh)[1]-1):
+    u=np.zeros(np.shape(ssha))
+    v=np.zeros(np.shape(ssha))
+    for ii in range(np.shape(ssha)[1]-1):
         detaxdy=detax[:,ii]/dx[ii]
         v[:,ii]=(g/f)*(detaxdy)
-    for jj in range(np.shape(ssh)[0]-1):
+    for jj in range(np.shape(ssha)[0]-1):
         detaydx=detay[jj,:]/dy[jj]
         u[jj,:]=-(g/f[jj])*(detaydx)
-    u[u>1000]=0
-    v[v>1000]=0
-    u[u<-1000]=0
-    v[v<-1000]=0
+    u[u>100]=0
+    v[v>100]=0
+    u[u<-100]=0
+    v[v<-100]=0
     return u,v
 
 
 def EkE(eta,u,v):
     print('Work in progress')
+    
+def KE(u,v):
+    ke=(1/2)*(u**2+v**2)
+    return ke
     
 def PVort(S,T,P,U,V):
     theta=np.zeros(np.shape(S))

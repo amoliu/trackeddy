@@ -42,7 +42,7 @@ def exact_eddy(eddydt,lat,lon,data):
 # Track eddy script used to update and remove bugs, It should be the same as the trackeddy.py file.
 
 
-def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',basemap=False,eddycenter='maximum',diagnostics=False,pprint=True):
+def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',basemap=False,eddycenter='maximum',checkgauss=True,diagnostics=False,plotdata=False,pprint=True):
     '''
     *************Scan Eddym***********
     Function to identify each eddy using closed contours,
@@ -68,6 +68,8 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
     '''
     ellipse_path=[]
     contour_path=[]
+    mayoraxis_eddy=[]
+    minoraxis_eddy=[]
     shapedata=np.shape(ssh)
     if ssh is ma.masked:
         print('Invalid ssh data, must be masked')
@@ -144,168 +146,221 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                 center=[np.nan,np.nan]
                 check=False
             else:
-                ellipse = fitEllipse(CONTeach[:,0],CONTeach[:,1])
-                center = ellipse_center(ellipse)
-                phi = ellipse_angle_of_rotation(ellipse)
-                axes = ellipse_axis_length(ellipse)
-                R = np.arange(0,2.1*np.pi, 0.1)
-                a,b = axes
-                #Ellipse coordinates.
-                xx = center[0] + a*np.cos(R)*np.cos(phi) - b*np.sin(R)*np.sin(phi)
-                yy = center[1] + a*np.cos(R)*np.sin(phi) + b*np.sin(R)*np.cos(phi)
-                #Area of Contours (contarea) and ellipse (ellipsarea)
-                contarea=PolyArea(CONTeach[:,0],CONTeach[:,1])
-                ellipsarea=PolyArea(xx,yy)
-                # Linear Eccentricity check
-                eccen=eccentricity(a,b)
-                #Record and check how many grid points have land or masked values
-                landcount=0
-                for ii in range(0,len(CONTeach[:,0])):
-                    idxcheck,idycheck=find2d(lon,lat,CONTeach[ii,0],CONTeach[ii,1])
-                    idxelipcheck,idyelipcheck=find2d(lon,lat,center[0],center[1])
-                    if len(shapedata)==3:
-                        if sshnan[date,idycheck,idxcheck]==np.nan:
-                            landcount=countzeros+1
-                    else:
-                        if sshnan[idycheck,idxcheck]==np.nan:
-                            landcount=countzeros+1
-                if landcount>=len(CONTeach[:,0])/2:
-                    #print 'Thisone is land'
-                    check=False
-                else:
-                    if contarea>ellipsarea:
-                        #### **** 17 august I changed 1.5 to 1.5 line 178 and 188 **** ####
-                        if contarea/1.5>ellipsarea:
-                            #print 'Removing contour, thisone is really underestimate'
-                            check=False
-                        elif eccen<0.95 and eccen>0:
-                            if ellipsarea < 200 and contarea < 200:
-                                #print 'Saving contour in path:'
-                                check=True
-                            else:
-                                check=False
-                        else:
-                            check=False
-                    elif contarea<ellipsarea:
-                        if contarea<ellipsarea/1.5:
-                            #print 'Removing contour, thisone is really overestimate'
-                            check=False
-                        #elif eccen<0.95 and eccen>0.4:
-                        #### **** 17 august I constraint more the eccen lines 181 and 195 **** ####   
-                        elif eccen<0.95 and eccen>0:
-                            if ellipsarea < 200 and contarea<200:
-                            #print 'Saving contour in path:'
-                                check=True
-                            else:
-                                check=False
-                        else:
-                            #print 'Removing contour, thisone is really underestimate'
-                            check=False
-                    else:
-                        check=False
-                #print(CONTeach[:,0],CONTeach[:,1])
-                #print('hola', np.shape(contour_path))
-                if diagnostics == True and  check == True:
-                    print("Ellipse parameters")
-                    print("Ellipse center = ",  center)
-                    print("angle of rotation = ",  phi)
-                    print("axes (a,b) = ", axes)
-                    print("Eccentricity = ",eccen)
-                    print("Area = ",contarea,ellipsarea)
-                if check==True:# or check==False:
-                    #Save data each eddy
-                    #print ellipse_path
-                    ellipse_path.append([xx,yy])
-                    contour_path.append([CONTeach[:,0],CONTeach[:,1]])
-                    #print shape(contour_path)
-                    #print(center)
-                    #Switch from the ellipse center to the position of the maximum value inside de contour
-                    if eddycenter == 'maximum':
-                        center=contourmaxvalue(CONTeach[:,0],CONTeach[:,1],sshnan,lon,lat,levels,date)
-                    elif eddycenter == 'masscenter':
-                        print('Still in development! Sorry :(')
-                        center=contourmaxvalue(CONTeach[:,0],CONTeach[:,1],sshnan,lon,lat,levels,date)
-                    #print(center)
-                    if eddyn==0:
-                        position=center
-                        total_eddy=eddyn
-                        area=contarea
-                        if CS.levels[0] > 0:
-                            level=CS.levels[0]
-                        else:
-                            level=CS.levels[1]
-                        levelprnt=level
-                    else:
-                        position=np.vstack((position,center))
-                        total_eddy=np.vstack((total_eddy,eddyn))
-                        area=np.vstack((area,contarea))
-                        if CS.levels[0] > 0:
-                            levelprnt=CS.levels[0]
-                            level=np.vstack((level,levelprnt))
-                        else:
-                            levelprnt=CS.levels[1]
-                            level=np.vstack((level,levelprnt))
+                ellipse,status=fit_ellipse(CONTeach[:,0],CONTeach[:,1],diagnostics=diagnostics)
+                if status==True:
+                    center = [ellipse['X0_in'],ellipse['Y0_in']]
+                    phi = ellipse['phi']
+                    axes = [ellipse['a'],ellipse['b']]
+                    R = np.arange(0,2.1*np.pi, 0.1)
+                    a,b = axes
+                    #Ellipse coordinates.
+                    xx = ellipse['ellipse'][0]
+                    yy = ellipse['ellipse'][1]
                     
-                    eddyn=eddyn+1
-                if diagnostics == True:
-                    f, (ax1, ax2) = plt.subplots(1, 2,figsize=(13, 6))
-                    if len(shapedata)==3:
-                        ax1.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
+                    mayoraxis = ellipse['majoraxis']
+                    minoraxis = ellipse['minoraxis']
+                    
+                    #Area of Contours (contarea) and ellipse (ellipsarea)
+                    contarea=PolyArea(CONTeach[:,0],CONTeach[:,1])
+                    ellipsarea=PolyArea(xx,yy)
+                    
+                    ### Calculate an stadistic to check fit of ellipse
+                    
+                    #yhat = ellipsarea                # or [p(z) for z in x]
+                    #ybar = np.sum(CONTeach[:,0],CONTeach[:,1])/len(CONTeach[:,0],CONTeach[:,1])   # or sum(y)/len(y)
+                    #ssreg = np.sum((yhat-ybar)**2)   # or sum([ (yihat - ybar)**2 for yihat in yhat])
+                    #sstot = np.sum((y - ybar)**2)    # or sum([ (yi - ybar)**2 for yi in y])
+                    #Rsquared = ssreg / sstot
+                    #print(Rsquared)
+                    
+                    # Linear Eccentricity check
+                    eccen=eccentricity(a,b)
+                    #Record and check how many grid points have land or masked values
+                    landcount=0
+                    for ii in range(0,len(CONTeach[:,0])):
+                        idxcheck,idycheck=find2d(lon,lat,CONTeach[ii,0],CONTeach[ii,1])
+                        idxelipcheck,idyelipcheck=find2d(lon,lat,center[0],center[1])
+                        if len(shapedata)==3:
+                            if sshnan[date,idycheck,idxcheck]==np.nan:
+                                landcount=countzeros+1
+                        else:
+                            if sshnan[idycheck,idxcheck]==np.nan:
+                                landcount=countzeros+1
+                    if landcount>=len(CONTeach[:,0])/2:
+                        #print 'Thisone is land'
+                        check=False
+                    else:
+                        if contarea>ellipsarea:
+                            #### **** 17 august I changed 1.5 to 1.5 line 178 and 188 **** ####
+                            if contarea/1.5>ellipsarea:
+                                #print 'Removing contour, thisone is really underestimate'
+                                check=False
+                            elif eccen<0.95 and eccen>0:
+                                if ellipsarea < 200 and contarea < 200:
+                                    #print 'Saving contour in path:'
+                                    check=True
+                                    
+                                    if checkgauss==True:
+                                        if len(shapedata)==3:
+                                            profile,check=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                            profile,check=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                        else:
+                                            profile,check=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                            profile,check=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                        ellipseadjust,check=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
+                                                                             [1],diagnostics=False)
+                                else:
+                                    check=False
+                            else:
+                                check=False
+                        elif contarea<ellipsarea:
+                            if contarea<ellipsarea/1.5:
+                                #print 'Removing contour, thisone is really overestimate'
+                                check=False
+                            #elif eccen<0.95 and eccen>0.4:
+                            #### **** 17 august I constraint more the eccen lines 181 and 195 **** ####   
+                            elif eccen<0.95 and eccen>0:
+                                if ellipsarea < 200 and contarea<200:
+                                #print 'Saving contour in path:'
+                                    check=True
+                                    if checkgauss==True:
+                                        if len(shapedata)==3:
+                                            profile,check=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                            profile,check=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                        else:
+                                            profile,check=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                            profile,check=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                        ellipseadjust,check=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
+                                                                         [1],diagnostics=False)
+                                else:
+                                    check=False
+                            else:
+                                #print 'Removing contour, thisone is really underestimate'
+                                check=False
+                        else:
+                            check=False
+                    #print(CONTeach[:,0],CONTeach[:,1])
+                    #print('hola', np.shape(contour_path))
+                    if diagnostics == True and  check == True:
+                        print("Ellipse parameters")
+                        print("Ellipse center = ",  center)
+                        print("angle of rotation = ",  phi)
+                        print("axes (a,b) = ", axes)
+                        print("Eccentricity = ",eccen)
+                        print("Area = ",contarea,ellipsarea)
+                    if check==True:# or check==False:
+                        #Save data each eddy
+                        #print ellipse_path
+                        ellipse_path.append([xx,yy])
+                        contour_path.append([CONTeach[:,0],CONTeach[:,1]])
+                        mayoraxis_eddy.append([mayoraxis[0],mayoraxis[1]])
+                        minoraxis_eddy.append([minoraxis[0],minoraxis[1]])
+                        #print shape(contour_path)
+                        #print(center)
+                        #Switch from the ellipse center to the position of the maximum value inside de contour
+                        if eddycenter == 'maximum':
+                            center_eddy=contourmaxvalue(CONTeach[:,0],CONTeach[:,1],sshnan,lon,lat,levels,date)
+                        elif eddycenter == 'masscenter':
+                            print('Still in development! Sorry :(')
+                            center_eddy=contourmaxvalue(CONTeach[:,0],CONTeach[:,1],sshnan,lon,lat,levels,date)
+                        #print(center)
+                        if eddyn==0:
+                            position_eddy=center_eddy
+                            position_ellipse=center
+                            total_eddy=eddyn
+                            area=contarea
+                            angle=phi
+                            if CS.levels[0] > 0:
+                                level=CS.levels[0]
+                            else:
+                                level=CS.levels[1]
+                            levelprnt=level
+                        else:
+                            position_eddy=np.vstack((position_eddy,center_eddy))
+                            position_ellipse=np.vstack((position_ellipse,center))
+                            total_eddy=np.vstack((total_eddy,eddyn))
+                            area=np.vstack((area,contarea))
+                            angle=np.vstack((angle,phi))
+                            
+                            if CS.levels[0] > 0:
+                                levelprnt=CS.levels[0]
+                                level=np.vstack((level,levelprnt))
+                            else:
+                                levelprnt=CS.levels[1]
+                                level=np.vstack((level,levelprnt))
+                        
+                        eddyn=eddyn+1
+                    if diagnostics == True and plotdata == True:
+                        f, (ax1, ax2) = plt.subplots(1, 2,figsize=(13, 6))
+                        if len(shapedata)==3:
+                            ax1.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
                                 ssh[date,areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]])
-                        cc=ax2.pcolormesh(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
+                            cc=ax2.pcolormesh(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
                                 ssh[date,areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],\
                                           vmin=ssh[date,areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]].min()\
                                           ,vmax=ssh[date,areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]].max())
-                        cca=ax2.contour(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
+                            cca=ax2.contour(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
                                 ssh[date,areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels,cmap='jet')
-                        ax2.clabel(cca, fontsize=9, inline=1)
-                    else:
-                        cca=ax1.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
-                        sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
-                        ax1.plot(CONTeach[:,0],CONTeach[:,1],'-r')
+                            ax2.clabel(cca, fontsize=9, inline=1)
+                        else:
+                            cca=ax1.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
+                            sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels)
+                            ax1.plot(CONTeach[:,0],CONTeach[:,1],'-r')
+                            ax2.plot(CONTeach[:,0],CONTeach[:,1],'-r')
+                            ax2.pcolormesh(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
+                            sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],vmin=-20,vmax=20)
+                            plt.show()
+                            f, (ax1, ax2) = plt.subplots(1, 2,figsize=(13, 6))
+                            ax1.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
+                                    ssh[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]])
+                            cc=ax2.pcolormesh(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
+                                    ssh[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],\
+                                              vmin=ssh[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]].min()\
+                                              ,vmax=ssh[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]].max())
+                            cca=ax2.contour(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
+                                    ssh[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels,cmap='jet')
+                            ax2.clabel(cca, fontsize=9, inline=1)
+                        ax1.plot(CONTeach[:,0],CONTeach[:,1],'*r')
+                        ax1.plot(xx,yy,'-b')
+                        ax1.plot(center[0],center[1],'ob')
+                        f.subplots_adjust(right=0.8)
+                        cbar_ax = f.add_axes([0.85, 0.15, 0.05, 0.7])
+                        f.colorbar(cc, cax=cbar_ax)
                         ax2.plot(CONTeach[:,0],CONTeach[:,1],'-r')
-                        ax2.pcolormesh(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
-                        sshnan[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],vmin=-20,vmax=20)
+                        ax2.plot(xx,yy,'-b')
+                        ax2.plot(center[0],center[1],'ob')
+                        #x, y = np.meshgrid(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]])
+                        #c = np.ones_like(x)
+                        ax2.plot(lon[idxelipcheck],lat[idyelipcheck],'om')
+                        #ax2.pcolor(x, y, c, facecolor='none', edgecolor='k')
+                        ax2.set_ylim([CONTeach[:,1].min(),CONTeach[:,1].max()])
+                        ax2.set_xlim([CONTeach[:,0].min(),CONTeach[:,0].max()])
                         plt.show()
-                        f, (ax1, ax2) = plt.subplots(1, 2,figsize=(13, 6))
-                        ax1.contourf(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
-                                ssh[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]])
-                        cc=ax2.pcolormesh(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
-                                ssh[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],\
-                                          vmin=ssh[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]].min()\
-                                          ,vmax=ssh[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]].max())
-                        cca=ax2.contour(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]],\
-                                ssh[areamap[1,0]:areamap[1,1],areamap[0,0]:areamap[0,1]],levels=levels,cmap='jet')
-                        ax2.clabel(cca, fontsize=9, inline=1)
-                    ax1.plot(CONTeach[:,0],CONTeach[:,1],'*r')
-                    ax1.plot(xx,yy,'-b')
-                    ax1.plot(center[0],center[1],'ob')
-                    f.subplots_adjust(right=0.8)
-                    cbar_ax = f.add_axes([0.85, 0.15, 0.05, 0.7])
-                    f.colorbar(cc, cax=cbar_ax)
-                    ax2.plot(CONTeach[:,0],CONTeach[:,1],'-r')
-                    ax2.plot(xx,yy,'-b')
-                    ax2.plot(center[0],center[1],'ob')
-                    #x, y = np.meshgrid(lon[areamap[0,0]:areamap[0,1]],lat[areamap[1,0]:areamap[1,1]])
-                    #c = np.ones_like(x)
-                    ax2.plot(lon[idxelipcheck],lat[idyelipcheck],'om')
-                    #ax2.pcolor(x, y, c, facecolor='none', edgecolor='k')
-                    ax2.set_ylim([CONTeach[:,1].min(),CONTeach[:,1].max()])
-                    ax2.set_xlim([CONTeach[:,0].min(),CONTeach[:,0].max()])
-                    plt.show()
-                    plt.close()
-            total_contours=total_contours+1
-        if pprint==True:
-            string='Total of contours was: %d - Total of eddies: %d - Level: %.1f   ' % (total_contours,eddyn,levelprnt)
-            pt =Printer(); pt.printtextoneline(string)
-    contour_path=np.array(contour_path)
-    ellipse_path=np.array(ellipse_path)
-    possition=np.array(position)
-    level=np.array(level)
-    eddys=dict_eddym(contour_path,ellipse_path,position,area,total_eddy,level)
-#    if destdir!='':
-#        save_data(destdir+'day'+str(date)+'_one_step_cont'+str(total_contours)+'.dat', variable)
-    
+                        plt.close()
+                total_contours=total_contours+1
+            if pprint==True:
+                string='Total of contours was: %d - Total of eddies: %d - Level: %.1f   ' % (total_contours,eddyn,levelprnt)
+                pt =Printer(); pt.printtextoneline(string)
+        #contour_path=np.array(contour_path)
+        #ellipse_path=np.array(ellipse_path)
+        position_eddy=np.array(position_eddy)
+        position_ellipse=np.array(position_ellipse)
+        level=np.array(level)
+        mayoraxis_eddy=np.array(mayoraxis_eddy)
+        minoraxis_eddy=np.array(minoraxis_eddy)
+        eddys=dict_eddym(contour_path,ellipse_path,position_eddy,position_ellipse,mayoraxis_eddy,minoraxis_eddy,\
+                         area,angle,total_eddy,level)
+    #    if destdir!='':
+    #        save_data(destdir+'day'+str(date)+'_one_step_cont'+str(total_contours)+'.dat', variable)
+        
     return eddys
     
 def scan_eddyt(ssh,lat,lon,levels,date,areamap,destdir='',okparm='',diagnostics=False):
@@ -335,6 +390,84 @@ def scan_eddyt(ssh,lat,lon,levels,date,areamap,destdir='',okparm='',diagnostics=
         save_data(destdir+str(date),eddies)
     return eddytd
 
+def exeddydt(eddydt,lat,lon,data,threshold,inside='',diagnostics=False):
+    '''*************Extract Eddy***********
+    Function to extract each eddy in multiple timesteps using closed contours.
+    Usage:
+    eddydt= Eddy data structure
+    lon,lat=longitude and latitude of your grid.
+    levels=Level of the contour
+    Example:
+    Author: Josue Martinez Moreno, 2017
+    '''
+    justeddy=np.zeros(np.shape(data))
+    print('*******Removing of eddies******')
+    for key, value in eddydt.items():
+        if type(value['time'])==int:
+            time=[value['time']]
+        else:
+            time=[]
+            for ii in value['time']:
+                time.append(ii[0])
+        ct=0 
+        for tt in time:
+            if len(value['level'])!= 1:
+                level=value['level'][ct]
+            else:
+                level=value['level']
+            if type(value['time'])==int:
+                lonmi=value['contour'][0][0].min()
+                lonma=value['contour'][0][0].max()
+                latmi=value['contour'][0][1].min()
+                latma=value['contour'][0][1].max()
+            else:
+                lonmi=value['contour'][ct][0].min()
+                lonma=value['contour'][ct][0].max()
+                latmi=value['contour'][ct][1].min()
+                latma=value['contour'][ct][1].max()
+            
+            mimcx,mimcy=find2d(lon,lat,lonmi,latmi)
+            mamcx,mamcy=find2d(lon,lat,lonma,latma)
+            loncm=lon[mimcx-threshold:mamcx+1+threshold]
+            latcm=lat[mimcy-threshold:mamcy+1+threshold]
+            
+            if mimcx==0:
+                mimcx=1
+            if inside == '':
+                datacm=data[tt,mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
+                if level > 0:
+                    datacm[datacm<=level]=0
+                    datacm[datacm>=1000]=0
+                elif level < 0:
+                    datacm[datacm>=level]=0
+                    datacm[datacm<=-1000]=0
+            else:
+                datacm=data[tt,mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
+                insidecm=inside[tt,mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
+                if level > 0:
+                    insidecm[insidecm<=level]=0
+                    insidecm[insidecm>=level]=1
+                elif level < 0:
+                    insidecm[insidecm>=level]=0
+                    insidecm[insidecm<=level]=1
+                #if np.shape(insidecm)!=np.shape(datacm):
+                #    print('Inside and general field should have the same shape')
+                #else:
+                datacm=datacm*insidecm
+                
+            if diagnostics==True:
+                plt.figure()
+                plt.pcolormesh(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],datacm)
+                #plt.contourf(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],insidecm)
+                plt.colorbar()
+                cca=plt.contourf(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],datacm,alpha=0.5)
+                plt.plot(value['contour'][ct][0],value['contour'][ct][1],'-m')
+                plt.show()
+            justeddy[tt,mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]=datacm
+            ct=ct+1  
+    print('*******End the Removing of eddies******')
+    return justeddy
+
 def exeddy(eddydt,lat,lon,data,ct,threshold,inside='',diagnostics=False):
     '''*************Extract Eddy***********
     Function to extract each eddy using closed contours.
@@ -348,12 +481,26 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,inside='',diagnostics=False):
     justeddy=np.zeros(np.shape(data))
     print('*******Removing of eddies******')
     for key, value in eddydt.items():
-        level=value['level']
+        #print(type(value['level']))
+        #print(len(value['level']))
+        if len(value['level'])!= 1:
+            level=value['level'][ct]
+        else:
+            level=value['level']
+        #print(level)
         rct=value['time']
-        lonmi=value['contour'][0].min()
-        lonma=value['contour'][0].max()
-        latmi=value['contour'][1].min()
-        latma=value['contour'][1].max()
+        #print(len(value['time']))
+        if type(value['time'])==int:
+            lonmi=value['contour'][0].min()
+            lonma=value['contour'][0].max()
+            latmi=value['contour'][1].min()
+            latma=value['contour'][1].max()
+        else:
+            lonmi=value['contour'][0][ct].min()
+            lonma=value['contour'][0][ct].max()
+            latmi=value['contour'][1][ct].min()
+            latma=value['contour'][1][ct].max()
+            
         mimcx,mimcy=find2d(lon,lat,lonmi,latmi)
         mamcx,mamcy=find2d(lon,lat,lonma,latma)
         loncm=lon[mimcx-threshold:mamcx+1+threshold]
@@ -378,6 +525,9 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,inside='',diagnostics=False):
             elif level < 0:
                 insidecm[insidecm>=level]=0
                 insidecm[insidecm<=level]=1
+            #if np.shape(insidecm)!=np.shape(datacm):
+            #    print('Inside and general field should have the same shape')
+            #else:
             datacm=datacm*insidecm
             
         if diagnostics==True:
@@ -397,7 +547,7 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,inside='',diagnostics=False):
     print('*******End the Removing of eddies******')
     return justeddy
 
-def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',areamap='',mask='',destdir='',okparm='',diagnostics=False,pprint=False):
+def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',areamap='',mask='',destdir='',okparm='',diagnostics=False,plotdata=False,pprint=False):
     '''
     *************Analys eddy in z and t ***********
     Function to identify each eddy using closed contours, 
@@ -437,7 +587,7 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
             elif minlevel>0 and maxlevel>0:
                 levels=[ll,500]
             eddies=scan_eddym(dataanomaly,x,y,levels,ii,areamap,mask=mask,destdir=destdir\
-                          ,okparm=okparm,diagnostics=diagnostics,pprint=pprint)
+                          ,okparm=okparm,diagnostics=diagnostics,plotdata=plotdata,pprint=pprint)
             if ll == farlevel:
                 eddz = dict_eddyz(ii,ll,farlevel,eddies,diagnostics=diagnostics)
             else:
@@ -449,7 +599,7 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
         pp.timepercentprint(t0,t1,tstep,ii)
     return eddytd
 
-def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',destdir='',okparm='',diagnostics=False,pprint=False):
+def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',destdir='',okparm='',diagnostics=False,plotdata=False,pprint=False):
     '''
     *************Analys eddy in z and t ***********
     Function to identify each eddy using closed contours, 
@@ -485,7 +635,7 @@ def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',dest
         elif level>0:
             levels=[level,500]
         eddies=scan_eddym(dataanomaly,x,y,levels,ii,areamap,mask=mask,destdir=destdir\
-                      ,okparm=okparm,diagnostics=diagnostics,pprint=pprint)
+                      ,okparm=okparm,diagnostics=diagnostics,plotdata=plotdata,pprint=pprint)
         if ii==0:
             eddytd=dict_eddyt(ii,eddies)
         else:
