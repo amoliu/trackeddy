@@ -212,7 +212,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                                             profile,check=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
                                                                   gaus='One',kind='linear',diagnostics=False)
                                         ellipseadjust,check=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
-                                                                             [1],diagnostics=False)
+                                                                             [1],diagnostics=diagnostics)
                                 else:
                                     check=False
                             else:
@@ -239,7 +239,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                                             profile,check=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
                                                                   gaus='One',kind='linear',diagnostics=False)
                                         ellipseadjust,check=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
-                                                                         [1],diagnostics=False)
+                                                                         [1],diagnostics=diagnostics)
                                 else:
                                     check=False
                             else:
@@ -255,7 +255,8 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                         print("angle of rotation = ",  phi)
                         print("axes (a,b) = ", axes)
                         print("Eccentricity = ",eccen)
-                        print("Area = ",contarea,ellipsarea)
+                        print("Area (cont,ellips) = ",contarea,ellipsarea)
+                        print("Ellipse adjust = ",ellipseadjust)
                     if check==True:# or check==False:
                         #Save data each eddy
                         #print ellipse_path
@@ -351,6 +352,8 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                 pt =Printer(); pt.printtextoneline(string)
         #contour_path=np.array(contour_path)
         #ellipse_path=np.array(ellipse_path)
+        #print(total_contours,np.nanmax(sshnan))
+        #print(position_eddy)
         position_eddy=np.array(position_eddy)
         position_ellipse=np.array(position_ellipse)
         level=np.array(level)
@@ -491,15 +494,15 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,inside='',diagnostics=False):
         rct=value['time']
         #print(len(value['time']))
         if type(value['time'])==int:
-            lonmi=value['contour'][0].min()
-            lonma=value['contour'][0].max()
-            latmi=value['contour'][1].min()
-            latma=value['contour'][1].max()
+            lonmi=np.array(value['contour'][0][0]).min()
+            lonma=np.array(value['contour'][0][0]).max()
+            latmi=np.array(value['contour'][0][1]).min()
+            latma=np.array(value['contour'][0][1]).max()
         else:
-            lonmi=value['contour'][0][ct].min()
-            lonma=value['contour'][0][ct].max()
-            latmi=value['contour'][1][ct].min()
-            latma=value['contour'][1][ct].max()
+            lonmi=value['contour'][ct][0].min()
+            lonma=value['contour'][ct][0].max()
+            latmi=value['contour'][ct][1].min()
+            latma=value['contour'][ct][1].max()
             
         mimcx,mimcy=find2d(lon,lat,lonmi,latmi)
         mamcx,mamcy=find2d(lon,lat,lonma,latma)

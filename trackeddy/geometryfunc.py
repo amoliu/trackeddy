@@ -201,13 +201,18 @@ def ellipsoidfit(y,yfit,diagnostics=False):
     f=interp1d(x, y)
     xnew=np.linspace(0,len(y)-1,len(yfit))
     eddy2fit=f(xnew)
-    maxindxed=find(yfit,yfit.max())
-    maxindxrd=find(eddy2fit,eddy2fit.max())
+    
+    indxed=find(yfit,yfit.max())
+    indxrd=find(eddy2fit,eddy2fit.max())
+    
+    if yfit[indxed]==yfit[indxed+1] and yfit[indxed]==yfit[indxed-1]:
+        indxed=find(yfit,yfit.min())
+        indxrd=find(eddy2fit,eddy2fit.min())
     
     eddy2fit=list(eddy2fit)*2
     eddyfitdisplace=np.zeros(len(yfit))
     for ii in range(len(yfit)):
-        eddyfitdisplace[ii]=eddy2fit[maxindxrd-maxindxed+ii]
+        eddyfitdisplace[ii]=eddy2fit[indxrd-indxed+ii]
     Rsquard=rsquard(eddyfitdisplace,yfit)
     if diagnostics==True:
         plt.figure()

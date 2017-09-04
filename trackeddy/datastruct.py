@@ -79,30 +79,11 @@ def dict_eddyt(ts,eddys,eddydt=''):
     else: 
         checklist=[]
         ceddies=[]
-        #print(eddydt)
+
         for key, value in list(eddydt.items()):
-            #print key
-            #print len(eddys['EddyN'])
-            
-            #number=value['neddy']
-            
-            #if isinstance(number, np.float64) or isinstance(number, np.int64):
-            #    number = number
-            #else: 
-            #    number = number[0]
-                
-            #level=value['level']
-            #print 'Time '+str(time.append(ts))+str(type(time))
-            #print time,ts
-            #position=value['position']
-            #position_eddy=value['position_eddy']
-            #ellipse=value['ellipse']
-            #print(key,value['neddy'],value['ellipse'])
-            #contour=value['contour']
-            #print(key)
-            #print(type(contour),contour)
-            #print(type(ellipse),ellipse)
+
             minoraxis= value['minoraxis']
+            #print('test',np.shape(minoraxis))
             majoraxis= value['majoraxis']
             number=value['neddy']
             time=value['time']
@@ -142,20 +123,23 @@ def dict_eddyt(ts,eddys,eddydt=''):
                 eddyxt1=eddys['Position'][nn][0]
                 eddyyt1=eddys['Position'][nn][1]
                 
-                #ellipse=value['ellipse'].append(eddys['Ellipse'][nn])
-                #contour=value['contour'].append(eddys['Contour'][nn])
-                #print(ellipse)
-                #print([value['ellipse']]+[eddys['Ellipse'][nn]])
-                #Check this code again
+                ################################################################
+                #### CHECK WHY THE MINORAXIS Probable bug somewhere else.#######
+                ################################################################
+                
+                ################################################################
+                ######## Add an analysis depending the maximum z level #########
+                ################################################################
+                if len(np.shape(minoraxis))==3:
+                    minoraxis=np.squeeze(minoraxis)
+                if len(np.shape(majoraxis))==3:
+                    majoraxis=np.squeeze(majoraxis)
+                
                 if (eddyxt1<=maxlon and eddyxt1>=minlon and eddyyt1<=maxlat and eddyyt1>=minlat) and\
                     (eddyxt0<=maxlon and eddyxt0>=minlon and eddyyt0<=maxlat and eddyyt0>=minlat) and\
                     int(timee)!=ts and (ts-int(timee))<5 and (areae<=area+area/4 and areae>=area-area/4):
-                #   
-                #    if ellipse==[None]:
-                #        print('stop')
-                #        return
-                #    print(ellipse)
-                    print(np.shape(minoraxis),np.shape(eddys['MinorAxis'][nn]))
+                        
+                    #print(len(np.shape(minoraxis)),np.shape(minoraxis),np.shape(eddys['MinorAxis'][nn]))
                     eddydt['eddyn_'+str(number)]={'neddy':number,'time':np.vstack((value['time'],ts)),\
                                             'position':np.vstack((position,eddys['Position'][nn])),\
                                             'area':np.vstack((areae,area)),'angle':np.vstack((value['angle'],angle)),\
@@ -165,24 +149,7 @@ def dict_eddyt(ts,eddys,eddydt=''):
                                             'level':np.vstack((level,eddys['Level'][nn])),\
                                             'minoraxis':np.vstack((minoraxis,eddys['MinorAxis'][nn])),\
                                             'majoraxis':np.vstack((majoraxis,eddys['MajorAxis'][nn]))}
-                    print(np.shape(np.vstack((minoraxis,eddys['MinorAxis'][nn]))),np.shape(eddys['MinorAxis'][nn]))
-                #print(ellipse.append(eddys['Ellipse'][nn]))
-                #checklist.append(number)
-                
-                #if (eddyxt1<=maxlon and eddyxt1>=minlon and eddyyt1<=maxlat and eddyyt1>=minlat) and\
-                #    (eddyxt0<=maxlon and eddyxt0>=minlon and eddyyt0<=maxlat and eddyyt0>=minlat) and\
-                #    (areae<=area+area/4 and areae>=area-area/4) and int(timee)!=ts and (ts-int(timee))<5:# 
-                        
-                #    eddydt['eddyn_'+str(number)]={'neddy':number,'time':np.vstack((value['time'],ts)),\
-                #                            'position':np.vstack((position,eddys['Position'][nn])),\
-                #                            'area':np.vstack((areae,area)),'angle':np.vstack((value['angle'],angle)),\
-                #                            'ellipse':np.vstack((ellipse,eddys['Ellipse'][nn])),\
-                #                            'contour':np.vstack((contour,eddys['Contour'][nn])),\
-                #                            'position_eddy':np.vstack((position_eddy,eddys['PositionEllipse'][nn])),\
-                #                            'level':np.vstack((level,eddys['Level'][nn])),\
-                #                            'minoraxis':np.vstack((minoraxis,eddys['MinorAxis'][nn])),\
-                #                            'majoraxis':np.vstack((majoraxis,eddys['MajorAxis'][nn]))}
-
+                    #print(np.shape(np.vstack((minoraxis,eddys['MinorAxis'][nn]))),np.shape(eddys['MinorAxis'][nn]))
                     checklist.append(number)
                 
                 
@@ -242,7 +209,7 @@ def dict_eddyz(ts,ll,maxlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
         level=eddz['Level']
         #print eddys['EddyN']
         #print np.shape(eddys['Contour'])
-        if type(eddys['EddyN'])==int:
+        if type(eddys['EddyN'])==int and type(eddz['EddyN'])==int:
             maxlon=np.squeeze(eddys['Contour'])[0][0].max()
             maxlone=np.squeeze(eddys['Ellipse'])[0][0].max()
             maxlat=np.squeeze(eddys['Contour'])[0][1].max()
@@ -255,13 +222,68 @@ def dict_eddyz(ts,ll,maxlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
             anglelb=eddys['Angle']
             eddyxlb=np.squeeze(eddys['Position'])[0]
             eddyylb=np.squeeze(eddys['Position'])[1]
-            
-            #print eddz['Position'][:,0]
-            if type(eddz['EddyN'])==int:
-                eddzlist=[eddz['EddyN']]
-            else:
-                eddzlist=eddz['EddyN']
-            for nn0 in range(0,len(eddzlist)):
+            eddyxlt=eddz['Position'][0]
+            eddyylt=eddz['Position'][1]
+            arealt=eddz['Area']
+                
+            if (eddyxlb<=maxlon and eddyxlb>=minlon and eddyylb<=maxlat and eddyylb>=minlat) and\
+            (eddyxlt<=maxlon and eddyxlt>=minlon and eddyylt<=maxlat and eddyylt>=minlat) and\
+            (arealt>=arealb/threshold and arealt<=arealb):
+                contour=eddys['Contour']
+                ellipse=eddys['Ellipse']
+                position=eddys['Position']
+                area=eddys['Area']
+                angle=eddys['Angle']
+                majoraxis=eddys['MajorAxis']
+                minoraxis=eddys['MinorAxis']
+                level=eddys['Level']
+                checklist=eddys['EddyN']
+                if diagnostics==True:
+                    print('Contour is growing')
+                    plt.figure()
+                    plt.plot(eddz['Contour'][0],eddz['Contour'][1],'-r')
+                    plt.plot(np.squeeze(eddys['Contour'])[0],np.squeeze(eddys['Contour'])[1],'-b')
+                    plt.show()
+                    plt.close()
+                    print('eddyN',eddz['EddyN'])
+                    print('eddyt1pos',eddyxlb,eddyylb)
+                    print('eddyt0pos',eddyxlt,eddyylt)
+                    print('area',arealb, arealt)
+                elif (eddyxlb<=maxlon and eddyxlb>=minlon and eddyylb<=maxlat and eddyylb>=minlat) and\
+                (eddyxlt<=maxlon and eddyxlt>=minlon and eddyylt<=maxlat and eddyylt>=minlat):
+                    checklist1.append(eddys['EddyN'])
+
+            if (eddys['EddyN']!= checklist):# and (eddys['EddyN']!= checklist1):
+                #print 'test'
+                contour=list(contour)
+                contour.append(np.squeeze(eddys['Contour']))
+                ellipse=list(ellipse)
+                ellipse.append(np.squeeze(eddys['Ellipse']))
+                position=np.vstack((position,np.squeeze(eddys['Position'])))
+                position_ellipse=np.vstack((position_ellipse,np.squeeze(eddys['PositionEllipse'])))
+                area=np.vstack((area,eddys['Area']))
+                angle=np.vstack((angle,eddys['Angle']))
+                majoraxis=list(majoraxis)
+                majoraxis.append(eddys['MajorAxis'])
+                minoraxis=list(minoraxis)
+                minoraxis.append(eddys['MinorAxis'])
+                level=np.vstack((level,eddys['Level']))
+                number=np.vstack((number,number+1))
+        elif type(eddys['EddyN'])==int and type(eddz['EddyN'])!=int:
+            maxlon=np.squeeze(eddys['Contour'])[0][0].max()
+            maxlone=np.squeeze(eddys['Ellipse'])[0][0].max()
+            maxlat=np.squeeze(eddys['Contour'])[0][1].max()
+            maxlate=np.squeeze(eddys['Ellipse'])[0][1].max()
+            minlon=np.squeeze(eddys['Contour'])[0][0].min()
+            minlone=np.squeeze(eddys['Ellipse'])[0][0].min()
+            minlat=np.squeeze(eddys['Contour'])[0][1].min()
+            minlate=np.squeeze(eddys['Ellipse'])[0][1].min()
+            arealb=eddys['Area']
+            anglelb=eddys['Angle']
+            eddyxlb=np.squeeze(eddys['Position'])[0]
+            eddyylb=np.squeeze(eddys['Position'])[1]
+
+            for nn0 in range(0,len(eddz['EddyN'])):
                 eddyxlt=eddz['Position'][nn0,0]
                 eddyylt=eddz['Position'][nn0,1]
                 arealt=eddz['Area'][nn0]
@@ -312,6 +334,70 @@ def dict_eddyz(ts,ll,maxlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
                 minoraxis.append(eddys['MinorAxis'])
                 level=np.vstack((level,eddys['Level']))
                 number=np.vstack((number,len(number)+1))
+        elif type(eddys['EddyN'])!=int and type(eddz['EddyN'])==int:
+            for nn1 in range(0,len(eddys['EddyN'])):
+                maxlon=eddys['Contour'][nn1][0].max()
+                maxlone=eddys['Ellipse'][nn1][0].max()
+                maxlat=eddys['Contour'][nn1][1].max()
+                maxlate=eddys['Ellipse'][nn1][1].max()
+                minlon=eddys['Contour'][nn1][0].min()
+                minlone=eddys['Ellipse'][nn1][0].min()
+                minlat=eddys['Contour'][nn1][1].min()
+                minlate=eddys['Ellipse'][nn1][1].min()
+                arealb=eddys['Area'][nn1]
+                eddyxlb=eddys['Position'][nn1][0]
+                eddyylb=eddys['Position'][nn1][1]
+
+                eddyxlt=eddz['Position'][0]
+                eddyylt=eddz['Position'][1]
+                arealt=eddz['Area']
+                    
+                if (eddyxlb<=maxlon and eddyxlb>=minlon and eddyylb<=maxlat and eddyylb>=minlat) and\
+                (eddyxlt<=maxlon and eddyxlt>=minlon and eddyylt<=maxlat and eddyylt>=minlat) and\
+                (arealt>=arealb/threshold and arealt<=arealb):
+                    contour=eddys['Contour'][nn1]
+                    ellipse=eddys['Ellipse'][nn1]
+                    position=eddys['Position'][nn1]
+                    position_ellipse=eddys['PositionEllipse'][nn1]
+                    area=eddys['Area'][nn1]
+                    angle=eddys['Angle'][nn1]
+                    majoraxis=eddys['MajorAxis'][nn1]
+                    minoraxis=eddys['MinorAxis'][nn1]
+                    level=eddys['Level'][nn1]
+                    checklist.append(eddys['EddyN'][nn1][0])
+                    if diagnostics==True:
+                        print('Contour is growing')
+                        print('eddyN', nn1,nn0)
+                        print('eddyt1pos',eddyxlb,eddyylb)
+                        print('eddyt0pos',eddyxlt,eddyylt)
+                        print('area',arealb, arealt)
+                elif (eddyxlb<=maxlon and eddyxlb>=minlon and eddyylb<=maxlat and eddyylb>=minlat) and\
+                (eddyxlt<=maxlon and eddyxlt>=minlon and eddyylt<=maxlat and eddyylt>=minlat):
+                    checklist1.append(eddys['EddyN'][nn1][0])
+                    
+                 
+            for nn1 in range(0,len(eddys['EddyN'])):
+                #print 'tr or fs',(eddys['EddyN'][nn1]!= checklist).all() and (eddys['EddyN'][nn1]!= checklist1).all()
+                #print 'eddyn',eddys['EddyN'][nn1]
+                if (eddys['EddyN'][nn1]!= checklist).all():# and (eddys['EddyN'][nn1]!= checklist1).all():
+                    #print 'test'
+                    contour=list(contour)
+                    contour.append(eddys['Contour'][nn1])
+                    ellipse=list(ellipse)
+                    ellipse.append(eddys['Ellipse'][nn1])
+                    majoraxis=list(majoraxis)
+                    majoraxis.append(eddys['MajorAxis'][nn1])
+                    minoraxis=list(minoraxis)
+                    minoraxis.append(eddys['MinorAxis'][nn1])
+                    position=np.vstack((position,eddys['Position'][nn1]))
+                    position_ellipse=np.vstack((position_ellipse,eddys['PositionEllipse'][nn1]))
+                    area=np.vstack((area,eddys['Area'][nn1]))
+                    angle=np.vstack((angle,eddys['Angle'][nn1]))
+                    
+                    level=np.vstack((level,eddys['Level'][nn1]))
+                    number=np.vstack((number,len(number)+1))
+                    
+                    
                     
         else:
             for nn1 in range(0,len(eddys['EddyN'])):
@@ -330,11 +416,8 @@ def dict_eddyz(ts,ll,maxlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
                 #print eddz['Position'][:,0]
                 #print(type(eddz['EddyN']))
                 #print(eddz['EddyN'])
-                if type(eddz['EddyN'])==int:
-                    eddzlist=[eddz['EddyN']]
-                else:
-                    eddzlist=eddz['EddyN']
-                for nn0 in range(0,len(eddzlist)):
+
+                for nn0 in range(0,len(eddz['EddyN'])):
                     eddyxlt=eddz['Position'][nn0,0]
                     eddyylt=eddz['Position'][nn0,1]
                     arealt=eddz['Area'][nn0]
