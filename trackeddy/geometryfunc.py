@@ -21,10 +21,13 @@ def fit_ellipse(x,y,diagnostics=False):
     xp=x-mean_x
     yp=y-mean_y
     X=np.array([xp**2,xp*yp,yp**2,xp,yp]).T
+    
     a=np.sum(X,axis=0)
     b=np.dot(X.T,X)
+
     # xb = a: solve b.T x.T = a.T instead 
-    x2 = np.linalg.lstsq(b.T, a.T)[0]
+    x2 = np.linalg.lstsq(b.T, a.T)
+    
     x2 = np.dot(a, np.linalg.pinv(b)) 
     a,b,c,d,e=x2
     if ( min(abs(b/a),abs(b/c)) > orientation_tolerance ):
@@ -166,8 +169,8 @@ def adjust1Gaus(x,y):
     e_gauss_fit = lambda p, x, y: (gauss_fit(p,x) -y) #1d Gaussian fit
 
     #v0=range(0,n,int(n/10))
-    v0= [1,10,1,1,30,1] #inital guesses for Gaussian Fit. – just do it around the peaks
-    out = leastsq(e_gauss_fit, v0[:], args=(x, y), maxfev=100000, full_output=1) #Gauss Fit
+    v0= [1,10,1,1,30,1] #inital guesses for Gaussian Fit. - just do it around the peaks
+    out = leastsq(e_gauss_fit, v0[:], args=(x, y), maxfev=1000, full_output=1) #Gauss Fit
     v = out[0] #fit parameters out
     covar = out[1] #covariance matrix output
 
@@ -180,8 +183,8 @@ def adjustMGaus(x,y):
     e_gauss_fit = lambda p, x, y: (gauss_fit(p,x) -y) #1d Gaussian fit
 
     #v0=range(0,n,int(n/10))
-    v0= [1,10,1,1,30,1] #inital guesses for Gaussian Fit. – just do it around the peaks
-    out = leastsq(e_gauss_fit, v0[:], args=(x, y), maxfev=100000, full_output=1) #Gauss Fit
+    v0= [1,10,1,1,30,1] #inital guesses for Gaussian Fit. - just do it around the peaks
+    out = leastsq(e_gauss_fit, v0[:], args=(x, y), maxfev=1000, full_output=1) #Gauss Fit
     v = out[0] #fit parameters out
     covar = out[1] #covariance matrix output
 
@@ -222,7 +225,7 @@ def ellipsoidfit(y,yfit,diagnostics=False):
         plt.plot(eddy['ellipse'][0][1])
         plt.plot(eddyfitdisplace)
         plt.show()
-    if Rsquard>=0.8:
+    if Rsquard>=0.85:
         check=True
     else:
         check=False

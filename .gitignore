@@ -107,6 +107,7 @@ ENV/
 
 # Data
 data.output/
+phd_research/
 
 # Git
 .gitignore

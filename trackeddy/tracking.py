@@ -85,7 +85,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
         print('Invalid len of levels, please use the function for multiple levels or use len(levels)==2')
         return
     #Saving mask for future post-processing.  
-
+    
     if mask!='':
         ssh=np.ma.masked_array(ssh, mask)
     sshnan=ssh.filled(np.nan)
@@ -201,16 +201,16 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                                     check=True
                                     
                                     if checkgauss==True:
-                                        if len(shapedata)==3:
-                                            profile,check=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
-                                            profile,check=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
-                                        else:
-                                            profile,check=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
-                                            profile,check=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
+                                        #if len(shapedata)==3:
+                                        #    profile,check=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
+                                        #                          gaus='One',kind='linear',diagnostics=False)
+                                        #    profile,check=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
+                                        #                          gaus='One',kind='linear',diagnostics=False)
+                                        #else:
+                                        #    profile,check=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
+                                        #                          gaus='One',kind='linear',diagnostics=False)
+                                        #    profile,check=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
+                                        #                          gaus='One',kind='linear',diagnostics=False)
                                         ellipseadjust,check=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
                                                                              [1],diagnostics=diagnostics)
                                 else:
@@ -228,16 +228,16 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                                 #print 'Saving contour in path:'
                                     check=True
                                     if checkgauss==True:
-                                        if len(shapedata)==3:
-                                            profile,check=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
-                                            profile,check=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
-                                        else:
-                                            profile,check=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
-                                            profile,check=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
+                                        #if len(shapedata)==3:
+                                        #    profile,check=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
+                                        #                          gaus='One',kind='linear',diagnostics=False)
+                                        #    profile,check=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
+                                        #                          gaus='One',kind='linear',diagnostics=False)
+                                        #else:
+                                        #    profile,check=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
+                                        #                          gaus='One',kind='linear',diagnostics=False)
+                                        #    profile,check=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
+                                        #                          gaus='One',kind='linear',diagnostics=False)
                                         ellipseadjust,check=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
                                                                          [1],diagnostics=diagnostics)
                                 else:
@@ -436,13 +436,15 @@ def exeddydt(eddydt,lat,lon,data,threshold,inside='',diagnostics=False):
             
             if mimcx==0:
                 mimcx=1
+            if mimcy==0:
+                mimcy=1
             if inside == '':
-                datacm=data[tt,mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
+                datacm=data[tt,mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]-level
                 if level > 0:
-                    datacm[datacm<=level]=0
+                    datacm[datacm<=0]=0
                     datacm[datacm>=1000]=0
                 elif level < 0:
-                    datacm[datacm>=level]=0
+                    datacm[datacm>=0]=0
                     datacm[datacm<=-1000]=0
             else:
                 datacm=data[tt,mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
@@ -467,6 +469,7 @@ def exeddydt(eddydt,lat,lon,data,threshold,inside='',diagnostics=False):
                 plt.plot(value['contour'][ct][0],value['contour'][ct][1],'-m')
                 plt.show()
             justeddy[tt,mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]=datacm
+            
             ct=ct+1  
     print('*******End the Removing of eddies******')
     return justeddy
@@ -511,13 +514,15 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,inside='',diagnostics=False):
 
         if mimcx==0:
             mimcx=1
+        if mimcy==0:
+            mimcy=1
         if inside == '':
-            datacm=data[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
+            datacm=data[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]-level
             if level > 0:
-                datacm[datacm<=level]=0
+                datacm[datacm<=0]=0
                 datacm[datacm>=1000]=0
             elif level < 0:
-                datacm[datacm>=level]=0
+                datacm[datacm>=0]=0
                 datacm[datacm<=-1000]=0
         else:
             datacm=data[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]*1
@@ -581,7 +586,7 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
             farlevel=levellist[0]
         if data_meant=='':
             print('Be sure the data is an anomaly')
-            dataanomaly=data
+            dataanomaly=data[ii,:,:]
         else:
             dataanomaly=data[ii,:,:]-data_meant
         for ll in levellist:
@@ -589,16 +594,22 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
                 levels=[-500,ll]
             elif minlevel>0 and maxlevel>0:
                 levels=[ll,500]
+            tic=time.time()
             eddies=scan_eddym(dataanomaly,x,y,levels,ii,areamap,mask=mask,destdir=destdir\
                           ,okparm=okparm,diagnostics=diagnostics,plotdata=plotdata,pprint=pprint)
+            print('ellapse identification:',time.time()-tic)
             if ll == farlevel:
                 eddz = dict_eddyz(ii,ll,farlevel,eddies,diagnostics=diagnostics)
             else:
+                tic=time.time()
                 eddz = dict_eddyz(ii,ll,farlevel,eddies,eddz,diagnostics=diagnostics)
+                print('ellapse dz:',time.time()-tic)
         if ii==0:
             eddytd=dict_eddyt(ii,eddz)
         else:
+            tic=time.time()
             eddytd=dict_eddyt(ii,eddz,eddytd) 
+            print('ellapse dt:',time.time()-tic)
         pp.timepercentprint(t0,t1,tstep,ii)
     return eddytd
 
