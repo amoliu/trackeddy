@@ -73,8 +73,8 @@ def fit_ellipse(x,y,diagnostics=False):
         X0_in       = P_in[0]
         Y0_in       = P_in[1]
         
-        ver_line        = np.array([ [X0,X0], [Y0-3*b/2, Y0+3*b/2]])
-        horz_line       = np.array([ [X0-3*a/2,X0+3*a/2], [Y0,Y0] ])
+        ver_line        = np.array([ [X0,X0], [Y0-1*b, Y0+1*b]])
+        horz_line       = np.array([ [X0-1*a,X0+1*a], [Y0,Y0] ])
         new_ver_line    = np.dot(R,ver_line)
         new_horz_line   = np.dot(R,horz_line)
     
@@ -154,6 +154,44 @@ def contourmaxvalue(contcoordx,contcoordy,var,x,y,levels,date):
     coord=[x[idxcheckmin+indexes[1][0]],y[idycheckmin+indexes[0][0]]]
     return coord
 
+def centroidvalue(contcoordx,contcoordy,var,x,y,levels,date):
+    idxcheckmax,idycheckmax=find2d(x,y,contcoordx.max(),contcoordy.max())
+    idxcheckmin,idycheckmin=find2d(x,y,contcoordx.min(),contcoordy.min())
+    #print(idycheckmin,idycheckmax,idxcheckmin,idxcheckmax)
+    if len(np.shape(var))==3:
+        if levels[0]>0:
+            var[var>levels[0]]==np.nan
+        else:
+            var[var<levels[0]]==np.nan
+        sum_T=np.sum(var[date,idycheckmin:idycheckmax+1,idxcheckmin:idxcheckmax+1])
+        sum_X=np.sum(var[date,idycheckmin:idycheckmax+1,idxcheckmin:idxcheckmax+1],axis=0)
+        sum_Y=np.sum(var[date,idycheckmin:idycheckmax+1,idxcheckmin:idxcheckmax+1],axis=1)
+        XM=0
+        for ii in range(len(sum_X)):
+            XM=XM+sum_X[ii]*x[idxcheckmin+ii]
+        YM=0
+        for ii in range(len(sum_Y)):
+            YM=YM+sum_Y[ii]*y[idycheckmin+ii]
+        xcpos=XM/sum_T
+        ycpos=YM/sum_T
+    else:
+        if levels[0]>0:
+            var[var>levels[0]]==np.nan
+        else:
+            var[var<levels[0]]==np.nan
+        sum_T=np.sum(var[idycheckmin:idycheckmax+1,idxcheckmin:idxcheckmax+1])
+        sum_X=np.sum(var[idycheckmin:idycheckmax+1,idxcheckmin:idxcheckmax+1],axis=0)
+        sum_Y=np.sum(var[idycheckmin:idycheckmax+1,idxcheckmin:idxcheckmax+1],axis=1)
+        XM=0
+        for ii in range(len(sum_X)):
+            XM=XM+sum_X[ii]*x[idxcheckmin+ii]
+        YM=0
+        for ii in range(len(sum_Y)):
+            YM=YM+sum_Y[ii]*y[idycheckmin+ii]
+        xcpos=XM/sum_T
+        ycpos=YM/sum_T
+    coord=[xcpos,ycpos]
+    return coord
 
 
 def gaus(x,a,x0,sigma):

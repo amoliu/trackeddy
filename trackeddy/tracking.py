@@ -11,38 +11,7 @@ from mpl_toolkits.basemap import Basemap
 import sys
 import time
 
-
-
-def exact_eddy(eddydt,lat,lon,data):
-    print('Work in progress')
-    level=-80
-    threshold=1
-    for ct in range(0,len(eddytd['eddyn_1']['time'])):
-        rct=eddytd['eddyn_1']['time'][ct][0]
-        data=eta[rct,:,:]*1
-        juesteddy=zeros(shape(data))
-        lonmi=eddytd['eddyn_1']['contour'][ct][0].min()
-        lonma=eddytd['eddyn_1']['contour'][ct][0].max()
-        latmi=eddytd['eddyn_1']['contour'][ct][1].min()
-        latma=eddytd['eddyn_1']['contour'][ct][1].max()
-        #print latma, lonma
-        mimcx,mimcy=find2d(lon,lat,lonmi,latmi)
-        mamcx,mamcy=find2d(lon,lat,lonma,latma)
-        
-        loncm=lon[mimcx-threshold:mamcx+1+threshold]
-        latcm=lat[mimcy-threshold:mamcy+1+threshold]
-        datacm=data[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]
-        datacm[datacm<=level]=nan
-        pcolormesh(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],datacm)
-        contourf(lon[mimcx-threshold:mamcx+1+threshold],lat[mimcy-threshold:mamcy+1+threshold],datacm,alpha=0.5)
-        plot(eddytd['eddyn_1']['contour'][ct][0],eddytd['eddyn_1']['contour'][ct][1],'-m')
-        plt.show()        
-        juesteddy[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]=datacm
-    
-# Track eddy script used to update and remove bugs, It should be the same as the trackeddy.py file.
-
-
-def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',basemap=False,eddycenter='maximum',checkgauss=True,diagnostics=False,plotdata=False,pprint=True):
+def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',basemap=False,eddycenter='masscenter',checkgauss=True,diagnostics=False,plotdata=False,pprint=True):
     '''
     *************Scan Eddym***********
     Function to identify each eddy using closed contours,
@@ -201,18 +170,20 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                                     check=True
                                     
                                     if checkgauss==True:
-                                        #if len(shapedata)==3:
-                                        #    profile,check=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
-                                        #                          gaus='One',kind='linear',diagnostics=False)
-                                        #    profile,check=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
-                                        #                          gaus='One',kind='linear',diagnostics=False)
-                                        #else:
-                                        #    profile,check=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
-                                        #                          gaus='One',kind='linear',diagnostics=False)
-                                        #    profile,check=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
-                                        #                          gaus='One',kind='linear',diagnostics=False)
-                                        ellipseadjust,check=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
+                                        if len(shapedata)==3:
+                                            profile,checkM=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                            profile,checkm=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                        else:
+                                            profile,checkM=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                            profile,checkm=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                        ellipseadjust,checke=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
                                                                              [1],diagnostics=diagnostics)
+                                        if checkM==True and checkm==True and  checke==True:
+                                            check=True
                                 else:
                                     check=False
                             else:
@@ -228,18 +199,20 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                                 #print 'Saving contour in path:'
                                     check=True
                                     if checkgauss==True:
-                                        #if len(shapedata)==3:
-                                        #    profile,check=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
-                                        #                          gaus='One',kind='linear',diagnostics=False)
-                                        #    profile,check=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
-                                        #                          gaus='One',kind='linear',diagnostics=False)
-                                        #else:
-                                        #    profile,check=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
-                                        #                          gaus='One',kind='linear',diagnostics=False)
-                                        #    profile,check=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
-                                        #                          gaus='One',kind='linear',diagnostics=False)
-                                        ellipseadjust,check=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
+                                        if len(shapedata)==3:
+                                            profile,checkM=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                            profile,checkm=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                        else:
+                                            profile,checkM=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                            profile,checkm=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
+                                                                  gaus='One',kind='linear',diagnostics=False)
+                                        ellipseadjust,checke=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
                                                                          [1],diagnostics=diagnostics)
+                                        if checkM==True and checkm==True and  checke==True:
+                                            check=True
                                 else:
                                     check=False
                             else:
@@ -270,9 +243,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
                         if eddycenter == 'maximum':
                             center_eddy=contourmaxvalue(CONTeach[:,0],CONTeach[:,1],sshnan,lon,lat,levels,date)
                         elif eddycenter == 'masscenter':
-                            print('Still in development! Sorry :(')
-                            center_eddy=contourmaxvalue(CONTeach[:,0],CONTeach[:,1],sshnan,lon,lat,levels,date)
-                        #print(center)
+                            center_eddy=centroidvalue(CONTeach[:,0],CONTeach[:,1],sshnan,lon,lat,levels,date)
                         if eddyn==0:
                             position_eddy=center_eddy
                             position_ellipse=center
@@ -361,8 +332,8 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',okparm='',base
         minoraxis_eddy=np.array(minoraxis_eddy)
         eddys=dict_eddym(contour_path,ellipse_path,position_eddy,position_ellipse,mayoraxis_eddy,minoraxis_eddy,\
                          area,angle,total_eddy,level)
-    #    if destdir!='':
-    #        save_data(destdir+'day'+str(date)+'_one_step_cont'+str(total_contours)+'.dat', variable)
+        #if destdir!='':
+        #    save_data(destdir+'day'+str(date)+'_one_step_cont'+str(total_contours)+'.dat', variable)
         
     return eddys
     
@@ -476,12 +447,13 @@ def exeddydt(eddydt,lat,lon,data,threshold,inside='',diagnostics=False):
 
 def exeddy(eddydt,lat,lon,data,ct,threshold,inside='',diagnostics=False):
     '''*************Extract Eddy***********
-    Function to extract each eddy using closed contours.
+    Function to extract the values of the eddies inside the closed contours.
     Usage:
     eddydt= Eddy data structure
     lon,lat=longitude and latitude of your grid.
     levels=Level of the contour
     Example:
+    
     Author: Josue Martinez Moreno, 2017
     '''
     justeddy=np.zeros(np.shape(data))
@@ -555,7 +527,7 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,inside='',diagnostics=False):
     print('*******End the Removing of eddies******')
     return justeddy
 
-def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',areamap='',mask='',destdir='',okparm='',diagnostics=False,plotdata=False,pprint=False):
+def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',areamap='',mask='',destdir='',physics='',eddycenter='masscenter',checkgauss=True,diagnostics=False,plotdata=False,pprint=False):
     '''
     *************Analys eddy in z and t ***********
     Function to identify each eddy using closed contours, 
@@ -585,7 +557,7 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
             levellist=np.flipud(levellist)
             farlevel=levellist[0]
         if data_meant=='':
-            print('Be sure the data is an anomaly')
+            print('Be sure the data is an anomaly', end='')
             dataanomaly=data[ii,:,:]
         else:
             dataanomaly=data[ii,:,:]-data_meant
@@ -594,26 +566,27 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
                 levels=[-500,ll]
             elif minlevel>0 and maxlevel>0:
                 levels=[ll,500]
-            tic=time.time()
+            #tic=time.time()
             eddies=scan_eddym(dataanomaly,x,y,levels,ii,areamap,mask=mask,destdir=destdir\
-                          ,okparm=okparm,diagnostics=diagnostics,plotdata=plotdata,pprint=pprint)
-            print('ellapse identification:',time.time()-tic)
+                          ,physics=physics,eddycenter=eddycenter,checkgauss=checkgauss\
+                          ,diagnostics=diagnostics,plotdata=plotdata,pprint=pprint)
+            #print('ellapse identification:',time.time()-tic)
             if ll == farlevel:
                 eddz = dict_eddyz(ii,ll,farlevel,eddies,diagnostics=diagnostics)
             else:
-                tic=time.time()
+                #tic=time.time()
                 eddz = dict_eddyz(ii,ll,farlevel,eddies,eddz,diagnostics=diagnostics)
-                print('ellapse dz:',time.time()-tic)
+                #print('ellapse dz:',time.time()-tic)
         if ii==0:
             eddytd=dict_eddyt(ii,eddz)
         else:
-            tic=time.time()
+            #tic=time.time()
             eddytd=dict_eddyt(ii,eddz,eddytd) 
-            print('ellapse dt:',time.time()-tic)
+            #print('ellapse dt:',time.time()-tic)
         pp.timepercentprint(t0,t1,tstep,ii)
     return eddytd
 
-def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',destdir='',okparm='',diagnostics=False,plotdata=False,pprint=False):
+def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',destdir='',physics='',eddycenter='masscenter',checkgauss=True,diagnostics=False,plotdata=False,pprint=False):
     '''
     *************Analys eddy in z and t ***********
     Function to identify each eddy using closed contours, 
@@ -638,7 +611,7 @@ def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',dest
     pp =  Printer(); 
     for ii in range(t0,t1,tstep):
         if data_meant=='':
-            print('Be sure the data is an anomaly')
+            print('Be sure the data is an anomaly', end='')
             dataanomaly=data[ii,:,:]
         else:
             dataanomaly=data[ii,:,:]-data_meant
@@ -649,7 +622,8 @@ def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',dest
         elif level>0:
             levels=[level,500]
         eddies=scan_eddym(dataanomaly,x,y,levels,ii,areamap,mask=mask,destdir=destdir\
-                      ,okparm=okparm,diagnostics=diagnostics,plotdata=plotdata,pprint=pprint)
+                      ,physics=physics,eddycenter=eddycenter,checkgauss=checkgauss\
+                      ,diagnostics=diagnostics,plotdata=plotdata,pprint=pprint)
         if ii==0:
             eddytd=dict_eddyt(ii,eddies)
         else:
