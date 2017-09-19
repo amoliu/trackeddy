@@ -106,7 +106,7 @@ ENV/
 .mypy_cache/
 
 # Data
-data.output/
+data.input/
 phd_research/
 
 # Git

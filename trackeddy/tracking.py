@@ -164,7 +164,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                             if contarea/1.5>ellipsarea:
                                 #print 'Removing contour, thisone is really underestimate'
                                 check=False
-                            elif eccen<0.95 and eccen>0:
+                            elif eccen<1 and eccen>0.5:
                                 if ellipsarea < 200 and contarea < 200:
                                     #print 'Saving contour in path:'
                                     check=True
@@ -173,17 +173,22 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                                         if len(shapedata)==3:
                                             profile,checkM=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
                                                                   gaus='One',kind='linear',diagnostics=False)
-                                            profile,checkm=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
+                                            #if checkM==True:
+                                            #    profile,checkm=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
+                                            #                      gaus='One',kind='linear',diagnostics=False)
                                         else:
                                             profile,checkM=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
                                                                   gaus='One',kind='linear',diagnostics=False)
-                                            profile,checkm=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
-                                        ellipseadjust,checke=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
+                                            #if checkM==True:
+                                            #    profile,checkm=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
+                                            #                      gaus='One',kind='linear',diagnostics=False)
+                                        if checkM==True: #and checkm==True:
+                                            ellipseadjust,checke=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
                                                                              [1],diagnostics=diagnostics)
-                                        if checkM==True and checkm==True and  checke==True:
+                                        if checkM==True and  checke==True: #and checkm==True: 
                                             check=True
+                                        else:
+                                            check=False
                                 else:
                                     check=False
                             else:
@@ -194,7 +199,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                                 check=False
                             #elif eccen<0.95 and eccen>0.4:
                             #### **** 17 august I constraint more the eccen lines 181 and 195 **** ####   
-                            elif eccen<0.95 and eccen>0:
+                            elif eccen<1 and eccen>0.5:
                                 if ellipsarea < 200 and contarea<200:
                                 #print 'Saving contour in path:'
                                     check=True
@@ -202,17 +207,22 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                                         if len(shapedata)==3:
                                             profile,checkM=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
                                                                   gaus='One',kind='linear',diagnostics=False)
-                                            profile,checkm=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
+                                            #if checkM==True:
+                                            #    profile,checkm=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
+                                            #                      gaus='One',kind='linear',diagnostics=False)
                                         else:
                                             profile,checkM=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
                                                                   gaus='One',kind='linear',diagnostics=False)
-                                            profile,checkm=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
-                                        ellipseadjust,checke=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
-                                                                         [1],diagnostics=diagnostics)
-                                        if checkM==True and checkm==True and  checke==True:
+                                            #if checkM==True:
+                                            #    profile,checkm=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
+                                            #                      gaus='One',kind='linear',diagnostics=False)
+                                        if checkM==True: #and checkm==True:
+                                            ellipseadjust,checke=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
+                                                                             [1],diagnostics=diagnostics)
+                                        if checkM==True and  checke==True: #and checkm==True: 
                                             check=True
+                                        else:
+                                            check=False
                                 else:
                                     check=False
                             else:
