@@ -305,7 +305,7 @@ def extractprofeddy(axis,field,lon,lat,n,gaus='One',kind='linear',varname='',dia
         
         Rsquared = rsquard(y,gausfit)
         
-    if Rsquared >= 0.6:
+    if Rsquared >= 0.65:
         check=True
     else:
         check=False
