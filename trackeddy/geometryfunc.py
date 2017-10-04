@@ -8,8 +8,18 @@ def fit_ellipse(x,y,diagnostics=False):
     '''
     This function was translated form Matlab to python by Josue Martinez Moreno,
     the original source:
-    Copyright (c) 2003, Ohad Gal
+    Copyright (c) 2003, Ohad Gal 
     All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without 
+    modification, are permitted provided that the following conditions are 
+    met:
+
+    * Redistributions of source code must retain the above copyright 
+    notice, this list of conditions and the following disclaimer. 
+    * Redistributions in binary form must reproduce the above copyright 
+    notice, this list of conditions and the following disclaimer in 
+    the documentation and/or other materials provided with the distribution
     For more information go to the main source:
     https://www.mathworks.com/matlabcentral/fileexchange/3215-fit-ellipse?requestedDomain=www.mathworks.com
     '''
@@ -108,28 +118,77 @@ def fit_ellipse(x,y,diagnostics=False):
     return ellipse_t,status
 
 def PolyArea(x,y):
+    '''
+    *************** Poligon Area *******************
+    This function calculaate the area of a poligon.
+    Usage:
+    
+    Example:
+    '''
     area=0.5*np.abs(np.dot(x,np.roll(y,1))-np.dot(y,np.roll(x,1)))
     return area
 
 def eccentricity(a,b):
+    '''
+    *************** Ellipse Eccentricity *******************
+    This function calculate the eccentricity of a ellipse.
+    Usage:
+    
+    Example:
+    a=minoraxis
+    b=mayoraxis
+    eccen=eccentricity(a,b)
+    '''
     if b>a:
         b1=a
         a=b
         b=b1
     eccen=np.sqrt(1-(b**2/a**2))
-    #print sqrt(a**2-b**2)
     return eccen
 
 def find2d(arrayx,arrayy,valuex,valuey):
+    '''
+    *************** Find 2 Value in 2 list *******************
+    This function find values in a list of values.
+    Usage:
+    
+    Example:
+    arrayx=list
+    arrayx=list
+    valuex=value2search
+    valuey=value2search
+    indexes=find2d(arrayx,arrayy,valuex,valuey)
+    '''
     idx=(np.abs(arrayx-valuex)).argmin()
     idy=(np.abs(arrayy-valuey)).argmin()
     return idx,idy
 
 def find(array,value):
+    '''
+    *************** Find Value in list *******************
+    This function find values in a list of values.
+    Usage:
+    
+    Example:
+    arrayx=list
+    arrayx=list
+    valuex=value2search
+    valuey=value2search
+    indexes=find2d(arrayx,arrayy,valuex,valuey)
+    '''
     idx=(np.abs(array-value)).argmin()
     return idx
 
 def contourmaxvalue(contcoordx,contcoordy,var,x,y,levels,date):
+    '''
+    *************** Find maximum value inside contour *******************
+    This function find the maximum value inside an specific contour.
+    Usage:
+    
+    Example:
+
+    Author: Josue Martinez Moreno, 2017
+    '''
     idxcheckmax,idycheckmax=find2d(x,y,contcoordx.max(),contcoordy.max())
     idxcheckmin,idycheckmin=find2d(x,y,contcoordx.min(),contcoordy.min())
     #print(idycheckmin,idycheckmax,idxcheckmin,idxcheckmax)
@@ -155,6 +214,15 @@ def contourmaxvalue(contcoordx,contcoordy,var,x,y,levels,date):
     return coord
 
 def centroidvalue(contcoordx,contcoordy,var,x,y,levels,date):
+    '''
+    *************** Find centroid inside contour *******************
+    This function find the centroid inside an specific contour.
+    Usage:
+    
+    Example:
+    
+    Author: Josue Martinez Moreno, 2017
+    '''
     idxcheckmax,idycheckmax=find2d(x,y,contcoordx.max(),contcoordy.max())
     idxcheckmin,idycheckmin=find2d(x,y,contcoordx.min(),contcoordy.min())
     #print(idycheckmin,idycheckmax,idxcheckmin,idxcheckmax)
@@ -195,18 +263,29 @@ def centroidvalue(contcoordx,contcoordy,var,x,y,levels,date):
 
 
 def gaus(x,a,x0,sigma):
-        return a*np.exp(-(x-x0)**2/(2*sigma**2))
+    '''
+    *************** Gaussian function *******************
+    This function build a gausian curve.
+    Usage:
+    
+    Example:
+
+    '''
+    gauss=a*np.exp(-(x-x0)**2/(2*sigma**2))
+    return gauss
 
 def adjust1Gaus(x,y):
-    #n = len(x)                          #the number of data
-    #mean = np.sum(x*y)/n                   #note this correction
-    #sigma = np.sum(y*(x-mean)**2)/n        #note this correction
-    #popt,pcov = curve_fit(gaus,x,y,p0=[1,mean,sigma])
-    #gausfit=gaus(x,*popt)
+    '''
+    *************** One Gaussian Fit *******************
+    This function fit one gaussian in a curve curve.
+    Usage:
+    
+    Example:
+
+    '''
     gauss_fit = lambda p, x: p[0]*(1/np.sqrt(2*np.pi*(p[2]**2)))*np.exp(-(x-p[1])**2/(2*p[2]**2)) #1d Gaussian func
     e_gauss_fit = lambda p, x, y: (gauss_fit(p,x) -y) #1d Gaussian fit
 
-    #v0=range(0,n,int(n/10))
     v0= [1,10,1,1,30,1] #inital guesses for Gaussian Fit. - just do it around the peaks
     out = leastsq(e_gauss_fit, v0[:], args=(x, y), maxfev=1000, full_output=1) #Gauss Fit
     v = out[0] #fit parameters out
@@ -216,12 +295,22 @@ def adjust1Gaus(x,y):
     return gausfit
 
 def adjustMGaus(x,y):
+    '''
+    *************** Multiple Gaussian Fit *******************
+    This function fit multiple gaussian in a curve curve.
+    Usage:
+    
+    Example:
+
+    '''
     gauss_fit = lambda p, x: p[0]*(1/np.sqrt(2*np.pi*(p[2]**2)))*np.exp(-(x-p[1])**2/(2*p[2]**2))+\
             p[3]*(1/np.sqrt(2*np.pi*(p[5]**2)))*np.exp(-(x-p[4])**2/(2*p[5]**2)) #1d Gaussian func
     e_gauss_fit = lambda p, x, y: (gauss_fit(p,x) -y) #1d Gaussian fit
 
+    n=len(x)
     #v0=range(0,n,int(n/10))
-    v0= [1,10,1,1,30,1] #inital guesses for Gaussian Fit. - just do it around the peaks
+    v0=[1,int(n/3),1,1,int(n/2),1,1,2*int(n/3),1]
+    #v0= [1,10,1,1,30,1] #inital guesses for Gaussian Fit. - just do it around the peaks
     out = leastsq(e_gauss_fit, v0[:], args=(x, y), maxfev=1000, full_output=1) #Gauss Fit
     v = out[0] #fit parameters out
     covar = out[1] #covariance matrix output
@@ -230,14 +319,33 @@ def adjustMGaus(x,y):
     return gausfit
 
 def rsquard(y,y1):
-    yhat=y1            # or [p(z) for z in x]
-    ybar = np.sum(y)/len(y)          # or sum(y)/len(y)
-    ssreg = np.sum((y-yhat)**2)   # or sum([ (yihat - ybar)**2 for yihat in yhat])
-    sstot = np.sum((y - ybar)**2)    # or sum([ (yi - ybar)**2 for yi in y])
-    R2 = 1 - ssreg / sstot
+    '''
+    *************** Correlation Coefficient (R^2) *******************
+    This function calculate the Pearson Coefficient.
+    Usage:
+    
+    Example:
+
+    '''
+    #yhat=y1            # or [p(z) for z in x]
+    #ybar = np.sum(y)/len(y)          # or sum(y)/len(y)
+    #ssreg = np.sum((y-yhat)**2)   # or sum([ (yihat - ybar)**2 for yihat in yhat])
+    #sstot = np.sum((y - ybar)**2)    # or sum([ (yi - ybar)**2 for yi in y])
+    #R2 = 1 - ssreg / sstot
+    R2=np.corrcoef(y, y1)[0,1]
+    #print(numpadj[0,1],R2,' geometry file')
     return R2 
 
-def ellipsoidfit(y,yfit,diagnostics=False):
+def ellipsoidfit(y,yfit,ellipsrsquarefit=0.85,diagnostics=False):
+    '''
+    *************** Ellipsoid  Fit *******************
+    This function check the fitness of an ellipsoid in a curve.
+    Usage:
+    
+    Example:
+    
+    Author: Josue Martinez Moreno, 2017
+    '''
     x=range(0,len(y))
     f=interp1d(x, y)
     xnew=np.linspace(0,len(y)-1,len(yfit))
@@ -263,13 +371,23 @@ def ellipsoidfit(y,yfit,diagnostics=False):
         plt.plot(eddy['ellipse'][0][1])
         plt.plot(eddyfitdisplace)
         plt.show()
-    if Rsquard>=0.85:
+    if Rsquard>=ellipsrsquarefit:
         check=True
     else:
         check=False
     return Rsquard,check
     
-def extractprofeddy(axis,field,lon,lat,n,gaus='One',kind='linear',varname='',diagnostics=False):
+def extractprofeddy(axis,field,lon,lat,n,gaus='One',kind='linear',gaussrsquarefit=0.65,varname='',diagnostics=False):
+    '''
+    *************** Extract Profile Eddy *******************
+    This function extracts the mayoraxis and minoraxis profile,
+    inside an eddy.
+    Usage:
+    
+    Example:
+
+    Author: Josue Martinez Moreno, 2017
+    '''
     try:
         fieldnan=field.filled(0)
     except:
@@ -305,7 +423,7 @@ def extractprofeddy(axis,field,lon,lat,n,gaus='One',kind='linear',varname='',dia
         
         Rsquared = rsquard(y,gausfit)
         
-    if Rsquared >= 0.65:
+    if Rsquared >= gaussrsquarefit:
         check=True
     else:
         check=False

@@ -7,11 +7,12 @@ from trackeddy.geometryfunc import *
 from trackeddy.init import *
 from trackeddy.physics import *
 from trackeddy.printfunc import *
+from trackeddy.savedata import *
 from mpl_toolkits.basemap import Basemap
 import sys
 import time
 
-def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',basemap=False,eddycenter='masscenter',checkgauss=True,diagnostics=False,plotdata=False,pprint=True):
+def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',basemap=False,eddycenter='masscenter',ellipsrsquarefit=0.85,eccenfit=0.95,gaussrsquarefit=0.85,checkgauss=True,diagnostics=False,plotdata=False,pprint=True):
     '''
     *************Scan Eddym***********
     Function to identify each eddy using closed contours,
@@ -153,7 +154,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                         if contarea>ellipsarea:
                             #if contarea/1.5>ellipsarea:
                             #    check=False
-                            if eccen<1 and eccen>0:
+                            if eccen<eccenfit and eccen>0:
                                 if ellipsarea < 200 and contarea < 200:
                                     if checkgauss==True:
                                         checke=False
@@ -162,23 +163,28 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                                         
                                         tic=time.time()
                                         ellipseadjust,checke=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
-                                                                             [1],diagnostics=diagnostics)
+                                                                          [1],ellipsrsquarefit=ellipsrsquarefit,\
+                                                                          diagnostics=diagnostics)
                                         #print('Time elapsed ellipsoidfit:',str(time.time()-tic))
                                         
                                         if checke==True:
                                             tic=time.time()
                                             if len(shapedata)==3:
                                                 profile,checkM=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
+                                                                  gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
+                                                                  diagnostics=False)
                                                 if checkM==True:
                                                     profile,checkm=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                      gaus='One',kind='linear',diagnostics=False)
+                                                                      gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
+                                                                      diagnostics=False)
                                             else:
                                                 profile,checkM=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
+                                                                  gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
+                                                                  diagnostics=False)
                                                 if checkM==True:
                                                     profile,checkm=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
-                                                                      gaus='One',kind='linear',diagnostics=False)
+                                                                      gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
+                                                                      diagnostics=False)
                                         #print('Time elapsed ellipsoidfit:',str(time.time()-tic))
                                         if checkM==True and  checke==True and checkm==True: 
                                             check=True
@@ -193,7 +199,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                                 #print 'Removing contour, thisone is really overestimate'
                             #    check=False
                             #elif eccen<0.95 and eccen>0.4:
-                            if eccen<1 and eccen>0:
+                            if eccen<eccenfit and eccen>0:
                                 if ellipsarea < 200 and contarea<200:
                                     if checkgauss==True:
                                         checke=False
@@ -202,23 +208,28 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                                         
                                         tic=time.time()
                                         ellipseadjust,checke=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
-                                                                             [1],diagnostics=diagnostics)
+                                                                          [1],ellipsrsquarefit=ellipsrsquarefit,\
+                                                                          diagnostics=diagnostics)
                                         #print('Time elapsed ellipsoidfit:',str(time.time()-tic))
                                         
                                         if checke==True:
                                             tic=time.time()
                                             if len(shapedata)==3:
                                                 profile,checkM=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
+                                                                  gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
+                                                                  diagnostics=False)
                                                 if checkM==True:
                                                     profile,checkm=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                      gaus='One',kind='linear',diagnostics=False)
+                                                                      gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
+                                                                      diagnostics=False)
                                             else:
                                                 profile,checkM=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',diagnostics=False)
+                                                                  gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
+                                                                  diagnostics=False)
                                                 if checkM==True:
                                                     profile,checkm=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
-                                                                      gaus='One',kind='linear',diagnostics=False)
+                                                                      gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
+                                                                      diagnostics=False)
                                         #print('Time elapsed ellipsoidfit:',str(time.time()-tic))
                                         if checkM==True and  checke==True and checkm==True: 
                                             check=True
@@ -525,8 +536,7 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,inside='',diagnostics=False):
         justeddy[mimcy-threshold:mamcy+1+threshold,mimcx-threshold:mamcx+1+threshold]=datacm
     print('*******End the Removing of eddies******')
     return justeddy
-
-def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',areamap='',mask='',destdir='',physics='',eddycenter='masscenter',checkgauss=True,diagnostics=False,plotdata=False,pprint=False):
+def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',areamap='',mask='',physics='',eddycenter='masscenter',eccenfit=0.8,ellipsrsquarefit=0.85,gaussrsquarefit=0.65,checkgauss=True,destdir='',saveformat='nc',diagnostics=False,plotdata=False,pprint=False):
     '''
     *************Analys eddy in z and t ***********
     Function to identify each eddy using closed contours, 
@@ -551,7 +561,6 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
     pp =  Printer(); 
     for ii in range(t0,t1,tstep):
         levellist=np.arange(minlevel,maxlevel+dzlevel,dzlevel)
-        print(levellist)
         farlevel=levellist[0]
         if abs(levellist)[0]<abs(levellist)[-1]:
             levellist=np.flipud(levellist)
@@ -569,6 +578,7 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
             #tic=time.time()
             eddies=scan_eddym(dataanomaly,x,y,levels,ii,areamap,mask=mask,destdir=destdir\
                           ,physics=physics,eddycenter=eddycenter,checkgauss=checkgauss\
+                          ,eccenfit=eccenfit,ellipsrsquarefit=ellipsrsquarefit,gaussrsquarefit=gaussrsquarefit\
                           ,diagnostics=diagnostics,plotdata=plotdata,pprint=pprint)
             #print('ellapse identification:',time.time()-tic)
             if ll == farlevel:
@@ -584,11 +594,16 @@ def analyseddyzt(data,x,y,t0,t1,tstep,maxlevel,minlevel,dzlevel,data_meant='',ar
             eddytd=dict_eddyt(ii,eddz,eddytd) 
             #print('ellapse dt:',time.time()-tic)
         pp.timepercentprint(t0,t1,tstep,ii)
+    if destdir!='':
+        if saveformat=='nc':
+            eddync(destdir+str(level)+'.nc',eddytd)
+        else:
+            np.save(destdir+str(level)+'.npy',eddytd)
     return eddytd
 
-def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',destdir='',physics='',eddycenter='masscenter',checkgauss=True,diagnostics=False,plotdata=False,pprint=False):
+def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',physics='',eddycenter='masscenter',ellipsrsquarefit=0.85,eccenfit=0.8,gaussrsquarefit=0.65,checkgauss=True,destdir='',saveformat='nc',diagnostics=False,plotdata=False,pprint=False):
     '''
-    *************Analys eddy in z and t ***********
+    *************Analys eddy in t ***********
     Function to identify each eddy using closed contours, 
     moving in time and contour levels
     Usage:
@@ -623,10 +638,16 @@ def analyseddyt(data,x,y,level,t0,t1,tstep,data_meant='',areamap='',mask='',dest
             levels=[level,500]
         eddies=scan_eddym(dataanomaly,x,y,levels,ii,areamap,mask=mask,destdir=destdir\
                       ,physics=physics,eddycenter=eddycenter,checkgauss=checkgauss\
+                      ,eccenfit=eccenfit,ellipsrsquarefit=ellipsrsquarefit,gaussrsquarefit=gaussrsquarefit\
                       ,diagnostics=diagnostics,plotdata=plotdata,pprint=pprint)
         if ii==0:
             eddytd=dict_eddyt(ii,eddies)
         else:
             eddytd=dict_eddyt(ii,eddies,eddytd) 
         pp.timepercentprint(t0,t1,tstep,ii)
+    if destdir!='':
+        if saveformat=='nc':
+            eddync(destdir+str(level)+'.nc',eddytd)
+        else:
+            np.save(destdir+str(level)+'.npy',eddytd)
     return eddytd
