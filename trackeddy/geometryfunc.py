@@ -364,12 +364,14 @@ def ellipsoidfit(y,yfit,ellipsrsquarefit=0.85,diagnostics=False):
         eddyfitdisplace[ii]=eddy2fit[indxrd-indxed+ii]
     Rsquard=rsquard(eddyfitdisplace,yfit)
     if diagnostics==True:
+        #plt.figure()
+        #plt.plot(eddy['ellipse'][0][0],eddy['ellipse'][0][1])
+        #plt.plot(eddy['contour'][0][0],eddy['contour'][0][1])
         plt.figure()
-        plt.plot(eddy['ellipse'][0][0],eddy['ellipse'][0][1])
-        plt.plot(eddy['contour'][0][0],eddy['contour'][0][1])
-        plt.figure()
-        plt.plot(eddy['ellipse'][0][1])
+        #plt.plot(eddy['ellipse'][0][1])
+        plt.plot(yfit)
         plt.plot(eddyfitdisplace)
+        plt.text(0, np.mean(yfit), str(round(Rsquard,2)))
         plt.show()
     if Rsquard>=ellipsrsquarefit:
         check=True

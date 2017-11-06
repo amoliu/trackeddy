@@ -4,10 +4,16 @@ from sympy.physics.vector import curl
 import numpy.ma as ma
 
 def okuboweissparm(u,v,lat,lon,z):
-    du=np.gradient(u[z,:,:],axis=1)
-    dv=np.gradient(v[z,:,:],axis=1)
-    du=np.gradient(u[z,:,:],axis=0)
-    dv=np.gradient(v[z,:,:],axis=0)
+    if z==0:
+        du=np.gradient(u[:,:],axis=1)
+        dv=np.gradient(v[:,:],axis=1)
+        du=np.gradient(u[:,:],axis=0)
+        dv=np.gradient(v[:,:],axis=0)
+    else:
+        du=np.gradient(u[z,:,:],axis=1)
+        dv=np.gradient(v[z,:,:],axis=1)
+        du=np.gradient(u[z,:,:],axis=0)
+        dv=np.gradient(v[z,:,:],axis=0)
     distmlon=sw.dist(0,lon,'km')[0][:]*1000
     distmlat=sw.dist(0,lat,'km')[0][:]*1000
     mlon=np.cumsum(distmlon)
@@ -24,7 +30,7 @@ def okuboweissparm(u,v,lat,lon,z):
     dv_dy=dv/dY
     sn=du_dx-dv_dy
     ss=dv_dx+du_dy
-    w=vorticity(u,v,z)
+    w=vorticity2D(u,v,lon,lat)
     owparm=sn**2+ss**2-w**2
     return owparm
     
@@ -77,6 +83,8 @@ def geovelfield(ssha,lon,lat,mask):
     v[v>100]=0
     u[u<-100]=0
     v[v<-100]=0
+    u= np.ma.masked_array(u, mask)
+    v= np.ma.masked_array(v, mask)
     return u,v
 
 

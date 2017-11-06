@@ -18,27 +18,35 @@ def vargeonc(filename,lat,lon,var,tt,varname,nc_description='',units='',dt='',di
     f = nc4.Dataset(filename,'w', format='NETCDF4')
     f.createDimension('lon', len(lon))
     f.createDimension('lat', len(lat))
-    f.createDimension('time', None)
+    f.createDimension('time', tt)
     longitude = f.createVariable('Longitude', 'f4', 'lon')
     latitude = f.createVariable('Latitude', 'f4', 'lat')
     
     time = f.createVariable('Time', 'i4', 'time')
+    
+    longitude[:] = lon
+    latitude[:] = lat
+    if tt==0:
+        time[:]=tt
+    else:
+        time[:]=range(0,tt)
+    print(len(time))
     if dim == '3D':
         f.createDimension('z', len(z))
         levels = f.createVariable('Levels', 'i4', 'z')
         varnc = f.createVariable(varname, 'f4', ('time', 'lat', 'lon', 'z'))
-        varnc[tt,:,:,:] = var
+        varnc[:,:,:,:] = var
         levels[:] = z
         levels.units = 'meters [m]'
     else:
         varnc = f.createVariable(varname, 'f4', ('time', 'lat', 'lon'))
-        varnc[tt,:,:] = var
-        
-    longitude[:] = lon
-    latitude[:] = lat
+        if tt==0:
+            varnc[tt,:,:] = var
+        else:
+            varnc[:,:,:] = var
+    
     today = datetime.today()
     time_num = today.toordinal()
-    time[tt]=time_num
     
     #Add global attributes
     f.description = nc_description

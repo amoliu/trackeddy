@@ -6,7 +6,7 @@ import matplotlib.colors as colors
 import matplotlib.gridspec as gridspec
 import matplotlib.animation as animation
 
-def basemap_mplot(x,y,data,title,projection='ortho',lat_0=-90,lon_0=-100,resolution='c',scale='Lin',vmin='',vmax='',cmap=cm.cm.thermal,xan=1,yan=1,figsize=(5,5),fontsize=15):
+def basemap_mplot(x,y,data,title,projection='ortho',lat_0=-90,lon_0=-100,boundinglat=-30,resolution='c',scale='Lin',vmin='',vmax='',cmap=cm.cm.thermal,xan=1,yan=1,figsize=(5,5),fontsize=15):
     fig, ax = plt.subplots(xan, yan, figsize=figsize)
 
     X,Y=np.meshgrid(x,y)
@@ -17,44 +17,44 @@ def basemap_mplot(x,y,data,title,projection='ortho',lat_0=-90,lon_0=-100,resolut
                 data=[data]
                 title=[title]
                 ttl=plt.title(title[count], fontsize=fontsize)
-                ttl.set_position([.5, 1.05])
-                map = Basemap(projection=projection,lat_0=lat_0,lon_0=lon_0,resolution=resolution)
+                ttl.set_position([.5, 1.05+fontsize*0.001])
+                map = Basemap(projection=projection,lat_0=lat_0,lon_0=lon_0,boundinglat=boundinglat,resolution=resolution)
                 lonm,latm=map(X,Y)
-                map.drawmeridians(np.arange(0,360,30),labels=[1,1,0,0],fontsize=10)
-                map.drawparallels(np.arange(0,360,30),labels=[1,1,0,0],fontsize=10)
+                map.drawmeridians(np.arange(0,360,30),labels=[1,1,0,0],fontsize=int(fontsize*0.6))
+                map.drawparallels(np.arange(0,360,30),labels=[1,1,0,0],fontsize=int(fontsize*0.6))
                 map.fillcontinents(color='black',lake_color='aqua')
                 map.drawcoastlines()
                 map.drawcoastlines()
                 m=plt
             elif xan!=1 and yan==1:
                 ttl=ax[ii].set_title(title[count], fontsize=fontsize)
-                ttl.set_position([.5, 1.05])
-                map = Basemap(projection=projection,lat_0=lat_0,lon_0=lon_0,resolution=resolution,ax=ax[ii])
+                ttl.set_position([.5, 1.05+fontsize*0.001])
+                map = Basemap(projection=projection,lat_0=lat_0,lon_0=lon_0,boundinglat=boundinglat,resolution=resolution,ax=ax[ii])
                 lonm,latm=map(X,Y)
-                map.drawmeridians(np.arange(0,360,30),labels=[1,1,0,0],fontsize=10)
-                map.drawparallels(np.arange(0,360,30),labels=[1,1,0,0],fontsize=10)
+                map.drawmeridians(np.arange(0,360,30),labels=[1,1,0,0],fontsize=int(fontsize*0.6))
+                map.drawparallels(np.arange(0,360,30),labels=[1,1,0,0],fontsize=int(fontsize*0.6))
                 map.fillcontinents(color='black',lake_color='aqua')
                 map.drawcoastlines()
                 map.drawcoastlines()
                 m=ax[ii]
             elif xan==1 and yan!=1:
                 ttl=ax[jj].set_title(title[count], fontsize=fontsize)
-                ttl.set_position([.5, 1.05])
-                map = Basemap(projection=projection,lat_0=lat_0,lon_0=lon_0,resolution=resolution,ax=ax[jj])
+                ttl.set_position([.5, 1.05+fontsize*0.001])
+                map = Basemap(projection=projection,lat_0=lat_0,lon_0=lon_0,boundinglat=boundinglat,resolution=resolution,ax=ax[jj])
                 lonm,latm=map(X,Y)
-                map.drawmeridians(np.arange(0,360,30),labels=[1,1,0,0],fontsize=10)
-                map.drawparallels(np.arange(0,360,30),labels=[1,1,0,0],fontsize=10)
+                map.drawmeridians(np.arange(0,360,30),labels=[1,1,0,0],fontsize=int(fontsize*0.6))
+                map.drawparallels(np.arange(0,360,30),labels=[1,1,0,0],fontsize=int(fontsize*0.6))
                 map.fillcontinents(color='black',lake_color='aqua')
                 map.drawcoastlines()
                 map.drawcoastlines()
                 m=ax[jj]
             else:
                 ttl=ax[ii,jj].set_title(title[count], fontsize=fontsize)
-                ttl.set_position([.5, 1.05])
-                map = Basemap(projection=projection,lat_0=lat_0,lon_0=lon_0,resolution=resolution,ax=ax[ii,jj])
+                ttl.set_position([.5, 1.05+fontsize*0.001])
+                map = Basemap(projection=projection,lat_0=lat_0,lon_0=lon_0,boundinglat=boundinglat,resolution=resolution,ax=ax[ii,jj])
                 lonm,latm=map(X,Y)
-                map.drawmeridians(np.arange(0,360,30),labels=[1,1,0,0],fontsize=10)
-                map.drawparallels(np.arange(0,360,30),labels=[1,1,0,0],fontsize=10)
+                map.drawmeridians(np.arange(0,360,30),labels=[1,1,0,0],fontsize=int(fontsize*0.6))
+                map.drawparallels(np.arange(0,360,30),labels=[1,1,0,0],fontsize=int(fontsize*0.6))
                 map.fillcontinents(color='black',lake_color='aqua')
                 map.drawcoastlines()
                 map.drawcoastlines()
