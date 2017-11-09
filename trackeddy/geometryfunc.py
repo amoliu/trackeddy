@@ -6,7 +6,10 @@ from scipy.optimize import curve_fit,leastsq
 
 def fit_ellipse(x,y,diagnostics=False):
     '''
-    This function was translated form Matlab to python by Josue Martinez Moreno,
+    **************** fit_ellipse *****************
+    Fitting of an ellipse to an array of positions.
+    
+    Function translated form Matlab to python by Josue Martinez Moreno,
     the original source:
     Copyright (c) 2003, Ohad Gal 
     All rights reserved.
@@ -22,6 +25,19 @@ def fit_ellipse(x,y,diagnostics=False):
     the documentation and/or other materials provided with the distribution
     For more information go to the main source:
     https://www.mathworks.com/matlabcentral/fileexchange/3215-fit-ellipse?requestedDomain=www.mathworks.com
+    Notes:
+    
+    Args:
+        x,y (array): Coordinates of the datapoints to fit an ellipse.
+        diagnostics (boolean): Used to display all the statistics and plots to identify bugs. 
+    Returns:
+        ellipse_t (dict) - This dictionary contains useful parameters describing completly the ellipsoid ajusted.
+        status (boolean) - This value will be true if and only if the the fit corresponds to a ellipse.
+    Usage:
+    R = np.arange(0,2*pi, 0.01)
+    x = 1.5*np.cos(R) + 2 + 0.1*np.random.rand(len(R))
+    y = np.sin(R) + 1. + 0.1*np.random.rand(len(R))
+    ellipse,status=fit_ellipse(x,y,diagnostics=False)
     '''
     orientation_tolerance = 1e-3;
     x=x[:]
@@ -119,25 +135,38 @@ def fit_ellipse(x,y,diagnostics=False):
 
 def PolyArea(x,y):
     '''
-    *************** Poligon Area *******************
-    This function calculaate the area of a poligon.
-    Usage:
+    *************** PolyArea *******************
+    Calculate the area of a poligon.
+    Notes:
     
-    Example:
+    Args:
+        x,y (array): Coordinates of the datapoints to fit an ellipse.
+    Returns:
+        area (float) -  Area contained by the poligon.
+    Usage:
+        R = np.arange(0,2*pi, 0.01)
+        x = 1.5*np.cos(R) + 2 + 0.1*np.random.rand(len(R))
+        y = np.sin(R) + 1. + 0.1*np.random.rand(len(R))
+        area=PolyArea(x,y)
     '''
     area=0.5*np.abs(np.dot(x,np.roll(y,1))-np.dot(y,np.roll(x,1)))
     return area
 
 def eccentricity(a,b):
     '''
-    *************** Ellipse Eccentricity *******************
+    *************** eccentricity *******************
     This function calculate the eccentricity of a ellipse.
+    Notes:
+        
+    Args:
+        a (float): Mayor axis of an ellipse
+        b (float): Minor axis of an ellipse
+    Returns:
+        eccen (float) - Eccentricity of the ellipsoid with parameters a,b.
     Usage:
-    
-    Example:
-    a=minoraxis
-    b=mayoraxis
-    eccen=eccentricity(a,b)
+        a=0.5
+        b=0.3
+        eccen=eccentricity(a,b)
     '''
     if b>a:
         b1=a
@@ -146,18 +175,25 @@ def eccentricity(a,b):
     eccen=np.sqrt(1-(b**2/a**2))
     return eccen
 
-def find2d(arrayx,arrayy,valuex,valuey):
+def find2l(arrayx,arrayy,valuex,valuey):
     '''
-    *************** Find 2 Value in 2 list *******************
-    This function find values in a list of values.
+    *************** find2l *******************
+    Find values in two list of values.
+    Notes:
+        
+    Args:
+        arrayx (list|array): Array where it will look the closer index to the valuex
+        arrayy (list|array): Array where it will look the closer index to the valuey
+        valuex (int|float): Value to look for in arrayx.
+        valuey (int|float): Value to look for in arrayy.
+    Returns:
+        idx,idy (int) - Index of closer values.
     Usage:
-    
-    Example:
-    arrayx=list
-    arrayx=list
-    valuex=value2search
-    valuey=value2search
-    indexes=find2d(arrayx,arrayy,valuex,valuey)
+        arrayx=[0,1,2,3]
+        arrayy=[4,5,6,7]
+        valuex=2.2
+        valuey=6.6
+        indexes=find2l(arrayx,arrayy,valuex,valuey)
     '''
     idx=(np.abs(arrayx-valuex)).argmin()
     idy=(np.abs(arrayy-valuey)).argmin()
@@ -165,34 +201,65 @@ def find2d(arrayx,arrayy,valuex,valuey):
 
 def find(array,value):
     '''
-    *************** Find Value in list *******************
-    This function find values in a list of values.
+    *************** find *******************
+    Find values in a list of values.
+    Notes:
+        
+    Args:
+        array (list|array): Array where it will look the closer index to the value
+        value (int|float): Value to look for in array.
+    Returns:
+        idx - Index of closer values.
     Usage:
-    
-    Example:
-    arrayx=list
-    arrayx=list
-    valuex=value2search
-    valuey=value2search
-    indexes=find2d(arrayx,arrayy,valuex,valuey)
+        array=[0,1,2,3]
+        value=2.2
+        idx=find(array,value)
     '''
     idx=(np.abs(array-value)).argmin()
     return idx
 
-def contourmaxvalue(contcoordx,contcoordy,var,x,y,levels,date):
+def find2D(array,value):
     '''
-    *************** Find maximum value inside contour *******************
-    This function find the maximum value inside an specific contour.
+    *************** find2D *******************
+    Find values in a 2D array of values.
+    Notes:
+        
+    Args:
+        array (list|array): 2D Array where it will look the closer index to the value
+        value (int|float): Value to look for in array.
+    Returns:
+        yp,xp - Index of closer values.
     Usage:
+        array=[[0,1,2,3],[0,1,4,3]]
+        value=2
+        idx,idy=find2D(array,value)
+    '''
+    yp,xp=np.where(array==value)
+    return yp,xp
     
-    Example:
-
-    Author: Josue Martinez Moreno, 2017
+def contourmaxvalue(contcoordx,contcoordy,var,x,y,levels,date=''):
+    '''
+    *************** contourmaxvalue *******************
+    Find the maximum value inside an specific contour.
+    Notes:
+        
+    Args:
+        contcoordx (list|array): Contains the coordinates in X of the contour of the field var. 
+        contcoordy (list|array): Contains the coordinates in Y of the contour of the field var.
+        var (array): 3D Matrix representing a surface (np.shape(var)=(date,len(x),len(y))).
+        x (list|arrat): Contains the coordinate X of the grid of var.
+        y (list|arrat): Contains the coordinate Y of the grid of var.
+        levels (list): Level of the extracted contour.
+        date (int): Used if len(var)==3 (i.e. Var contains a time dimension).
+    Returns:
+        coord (list) - Location of the max value in the grid.
+    Usage:
+        center_eddy=contourmaxvalue(contcoordx,contcoordx,sshnan,lon,lat,levels,date)
     '''
     idxcheckmax,idycheckmax=find2d(x,y,contcoordx.max(),contcoordy.max())
     idxcheckmin,idycheckmin=find2d(x,y,contcoordx.min(),contcoordy.min())
     #print(idycheckmin,idycheckmax,idxcheckmin,idxcheckmax)
-    if len(np.shape(var))==3:
+    if len(np.shape(var))==3 or date='':
         if levels[0]>0:
             var[var>levels[0]]==np.nan
             sshextrem=np.nanmax(var[date,idycheckmin:idycheckmax,idxcheckmin:idxcheckmax])
@@ -215,13 +282,22 @@ def contourmaxvalue(contcoordx,contcoordy,var,x,y,levels,date):
 
 def centroidvalue(contcoordx,contcoordy,var,x,y,levels,date):
     '''
-    *************** Find centroid inside contour *******************
-    This function find the centroid inside an specific contour.
+    *************** centroidvalue *******************
+    Find the centroid inside an specific contour.
+    Notes:
+        
+    Args:
+        contcoordx (list|array): Contains the coordinates in X of the contour of the field var. 
+        contcoordy (list|array): Contains the coordinates in Y of the contour of the field var.
+        var (array): 3D Matrix representing a surface (np.shape(var)=(date,len(x),len(y))).
+        x (list|arrat): Contains the coordinate X of the grid of var.
+        y (list|arrat): Contains the coordinate Y of the grid of var.
+        levels (list): Level of the extracted contour.
+        date (int): Used if len(var)==3 (i.e. Var contains a time dimension).
+    Returns:
+        coord (list) - Location of the centroid in the grid.
     Usage:
-    
-    Example:
-    
-    Author: Josue Martinez Moreno, 2017
+        center_eddy=centroidvalue(contcoordx,contcoordx,sshnan,lon,lat,levels,date)
     '''
     idxcheckmax,idycheckmax=find2d(x,y,contcoordx.max(),contcoordy.max())
     idxcheckmin,idycheckmin=find2d(x,y,contcoordx.min(),contcoordy.min())
@@ -264,24 +340,47 @@ def centroidvalue(contcoordx,contcoordy,var,x,y,levels,date):
 
 def gaus(x,a,x0,sigma):
     '''
-    *************** Gaussian function *******************
-    This function build a gausian curve.
-    Usage:
+    *************** gaus *******************
+    Build a gausian curve.
+    Notes:
     
-    Example:
-
+    Args:
+        x (list|array): Array of positions.
+        a (float): Amplitud of gaussian.
+        x0 (float): Center of Gausian.
+        sigma (float): Deviation.
+    Returns:
+        gauss (array) - Array of gaussian values.
+    Usage:
+        x=np.arange(-5,5,0.1)
+        x0=0
+        a=3
+        sigma=2
+        gaussian=gaus(x,a,x0,sigma)
+        plot(x,gaussian)
+        show()
     '''
     gauss=a*np.exp(-(x-x0)**2/(2*sigma**2))
     return gauss
 
 def adjust1Gaus(x,y):
     '''
-    *************** One Gaussian Fit *******************
-    This function fit one gaussian in a curve curve.
-    Usage:
+    *************** adjust1Gaus *******************
+    Fit one gaussian in a curve curve.
+    Notes:
     
-    Example:
-
+    Args:
+        x(list|array): Coordinates in x of data.
+        y(list|array): Data to be ajusted with one gaussian. 
+    Returns:
+        gausfit(list|array) - Data ajusted.
+    Usage:
+        x=np.arange(-5,5,0.1)
+        x0=0
+        a=3
+        sigma=2
+        gaussian=gaus(x,a,x0,sigma)
+        gaussianfit=adjust1Gaus(x,gaussian)
     '''
     gauss_fit = lambda p, x: p[0]*(1/np.sqrt(2*np.pi*(p[2]**2)))*np.exp(-(x-p[1])**2/(2*p[2]**2)) #1d Gaussian func
     e_gauss_fit = lambda p, x, y: (gauss_fit(p,x) -y) #1d Gaussian fit
@@ -296,12 +395,22 @@ def adjust1Gaus(x,y):
 
 def adjustMGaus(x,y):
     '''
-    *************** Multiple Gaussian Fit *******************
-    This function fit multiple gaussian in a curve curve.
+    *************** adjustMGaus *******************
+    Fit multiple gaussian in a curve curve.
+    Notes:
+        
+    Args:
+        x(list|array): Coordinates in x of data.
+        y(list|array): Data to be ajusted with multiple gaussians. 
+    Returns:
+        gausfit(list|array) - Data ajusted.
     Usage:
-    
-    Example:
-
+        x=np.arange(-5,5,0.1)
+        x0=0
+        a=3
+        sigma=2
+        gaussian=gaus(x,a,x0,sigma)+gaus(x,a-2,x0+2,sigma-1)
+        gaussianfit=adjustMGaus(x,gaussian)
     '''
     gauss_fit = lambda p, x: p[0]*(1/np.sqrt(2*np.pi*(p[2]**2)))*np.exp(-(x-p[1])**2/(2*p[2]**2))+\
             p[3]*(1/np.sqrt(2*np.pi*(p[5]**2)))*np.exp(-(x-p[4])**2/(2*p[5]**2)) #1d Gaussian func
@@ -318,33 +427,53 @@ def adjustMGaus(x,y):
     gausfit = gauss_fit(v,x) # this will only work if the units are pixel and not wavelength
     return gausfit
 
-def rsquard(y,y1):
+def rsquard(y,yfit):
     '''
-    *************** Correlation Coefficient (R^2) *******************
-    This function calculate the Pearson Coefficient.
+    *************** rsquard *******************
+    Calculate the Pearson Coefficient.
+    Notes:
+        Make sure the x grid coincide at least with indexes for y and y1.
+    Args:
+        y(list|array): Original data.
+        yfit(list|array): Data ajusted. 
+    Returns:
+        R2 (float): Pearson Coefficient.
     Usage:
-    
-    Example:
-
+        x=np.arange(-5,5,0.1)
+        x0=0
+        a=3
+        sigma=2
+        gaussian=gaus(x,a,x0,sigma)+gaus(x,a-2,x0+2,sigma-1)
+        gaussianfit=adjustMGaus(x,gaussian)
+        R2=rsquard(gaussian,gaussianfit)
     '''
     #yhat=y1            # or [p(z) for z in x]
     #ybar = np.sum(y)/len(y)          # or sum(y)/len(y)
     #ssreg = np.sum((y-yhat)**2)   # or sum([ (yihat - ybar)**2 for yihat in yhat])
     #sstot = np.sum((y - ybar)**2)    # or sum([ (yi - ybar)**2 for yi in y])
     #R2 = 1 - ssreg / sstot
-    R2=np.corrcoef(y, y1)[0,1]
+    R2=np.corrcoef(y, yfit)[0,1]
     #print(numpadj[0,1],R2,' geometry file')
     return R2 
 
 def ellipsoidfit(y,yfit,ellipsrsquarefit=0.85,diagnostics=False):
     '''
-    *************** Ellipsoid  Fit *******************
-    This function check the fitness of an ellipsoid in a curve.
+    *************** ellipsoidfit *******************
+    Check the fitness of an ellipsoid in a curve.
+    Notes:
+        
+    Args:
+        y(list|array): Original data.
+        yfit(list|array): Ellipse ajusted to contour. 
+        ellipsrsquarefit (float): [0 > ellipsrsquarefit < 1]
+            Pearson Coefficient to validate an ellipse.
+        diagnostics (boolean): Used to display all the 
+            statistics and plots to identify bugs.
+    Returns:
+        Rsquard (float) - Fitness of the ellipse.
+        check (boolean) - True if gaussian adjust is greater than gaussrsquarefit.
     Usage:
-    
-    Example:
-    
-    Author: Josue Martinez Moreno, 2017
+        Check scan_eddym function.
     '''
     x=range(0,len(y))
     f=interp1d(x, y)
@@ -381,14 +510,28 @@ def ellipsoidfit(y,yfit,ellipsrsquarefit=0.85,diagnostics=False):
     
 def extractprofeddy(axis,field,lon,lat,n,gaus='One',kind='linear',gaussrsquarefit=0.65,varname='',diagnostics=False):
     '''
-    *************** Extract Profile Eddy *******************
-    This function extracts the mayoraxis and minoraxis profile,
-    inside an eddy.
+    *************** extractprofeddy *******************
+    Extracts the profile inside a segment.
+    Notes:
+        Primary used to extract the mayor or minor axis of an ellipse.
+    Args:
+        axis (list): Coordinates of an segment.
+        field (array): Surface where the profile will be extracted.
+        lon,lat (array|list): Coordinates fo the field.
+        n (int): Number of desired divisions in the segment.
+        gaus (Default:One|None|Multiple): Ajustment to segment.
+        kind (Default:linear|cubic|etc): Type of interpolation inside
+            segment (For more information check scipy.interpolate interp2d)
+        gaussrsquarefit (float): [0 > ellipsrsquarefit < 1]
+            Pearson Coefficient to validate an gaussian.
+        varname (str): Name of variable, just used for plots.
+        diagnostics (boolean): Used to display all the 
+            statistics and plots to identify bugs.
+    Returns:
+        axisdata (array) - Data extracted in the segment.
+        check (boolean) - True if gaussian adjust is greater than gaussrsquarefit.
     Usage:
-    
-    Example:
-
-    Author: Josue Martinez Moreno, 2017
+        Check scan_eddym function.
     '''
     try:
         fieldnan=field.filled(0)

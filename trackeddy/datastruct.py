@@ -8,24 +8,54 @@ warnings.filterwarnings("ignore")
 
 def dict_eddym(contour, ellipse, position_eddy,position_ellipse,majoraxis_eddy,minoraxis_eddy,area,angle,number,level):
     '''
-    Function to create a dictionary with a basic structure of the eddies.
-    It has the following form:
-    {'Contour':contour,'Ellipse':ellipse,'Position':position_eddy,'PositionEllipse':position_ellipse,'MajorAxis':majoraxis_eddy,'MinorAxis':minoraxis_eddy,'Area':area,'Angle':angle,'EddyN':number,'Level':level}
+    ********************** dict_eddym **********************
+    Create a dictionary with a basic structure of the eddies. Can contain the structure of one eddy or multple eddies.
+    Notes: 
+        
+    Args:
+        contour (array): Close contour used to track any gaussian (Eddy).
+        ellipse (array): Ellipse ajusted to identify a gaussian shape. 
+        position_eddy (array): Positions (X, Y) describing the location of the feature. 
+        position_ellipse (array): Positions (X, Y) describing the location of the ajusted ellipse. 
+        majoraxis_eddy (array): Positions (X, Y) describing the mayor axis of the ajusted ellipse.
+        minoraxis_eddy (array): Positions (X, Y) describing the minor axis of the ajusted ellipse.
+        area (array): Area of the feature.
+        angle (array): Angle of the ajusted ellipse starting on the 0 degree convention (counterclockwise).
+        number (list): Number of the feature. Flag used to track features in time.
+        level (array): Contour level used during the identification of the feature.
+    Returns:
+        contour_data - Dictionary containing all the relevant information of the features.
+        The new dictionary containing all the information has the following form:        
+        {'Contour':contour,'Ellipse':ellipse,'Position':position_eddy,\
+        'PositionEllipse':position_ellipse,'MajorAxis':majoraxis_eddy,\
+        'MinorAxis':minoraxis_eddy,'Area':area,'Angle':angle,'EddyN':number,'Level':level}
     Usage:
-    
-    Author: Josue Martinez Moreno, 2017
+        eddys=dict_eddym(contour_path,ellipse_path,position_eddy,position_ellipse,mayoraxis_eddy,minoraxis_eddy,\
+                     area,angle,total_eddy,level)
     '''
     contour_data={'Contour':contour,'Ellipse':ellipse,'Position':position_eddy,'PositionEllipse':position_ellipse,'MajorAxis':majoraxis_eddy,'MinorAxis':minoraxis_eddy,'Area':area,'Angle':angle,'EddyN':number,'Level':level}
     return contour_data
 
 def dict_eddyt(ts,eddys,eddydt=''):
     '''
-    Function to create a dictionary with all the eddies.
-    All the keys have the following form:
-    {eddyn_0:{neddy,time,position,ellipse,contour},eddyn_1:{neddy,time,position,ellipse,contour}}
+    ********************** dict_eddyt **********************
+    Create a dictionary with all the eddies and it's track on time. When 'ts==0' or eddydt is not defined it start creating a new dictionary otherwise it grows the dictionary.
+    Notes:
+        Check for some possible bugs where it's saving more than once some features.
+    Args:
+        ts (int): Step or counter used to move in time.
+        eddys (dict): Dictionary containing all the relevant information of the features. Check "dict_eddym".
+        eddydt(dict): Output dictionary of this function used to grow the features. Check "dict_eddyt".
+    Returns:
+        eddydt - Dictionary containig each eddy and it's track on time.
+        All the keys have the following form:
+        {eddyn_0:{neddy,time,position,ellipse,contour,...},eddyn_1:{neddy,time,position,ellipse,contour,...},...}
     Usage:
-    
-    Author: Josue Martinez Moreno, 2017
+        if tt==0:
+            eddytd=dict_eddyt(tt,eddys)
+        else:
+            eddytd=dict_eddyt(tt,eddys,eddytd) 
+        
     '''
     if ts==0 or eddydt=='':
         eddydt={'eddyn_'+str(eddys['EddyN'][0][0]):{'neddy':eddys['EddyN'][0],'time':ts,'position':eddys['Position'][0],\
@@ -210,12 +240,27 @@ def dict_eddyt(ts,eddys,eddydt=''):
 
 def dict_eddyz(ts,ll,maxlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
     '''
-    Function to create a dictionary with all the important eddy in Z.
-    All the keys have the following form:
-    {eddyn_0:{neddy,time,position,ellipse,contour},eddyn_1:{neddy,time,position,ellipse,contour}}
+    ********************** dict_eddyz **********************
+    Create a dictionary with all the eddies and it's develop in delta eta, where the biggest contour is assigned as the contour that will be tracked.
+    Notes:
+        Check for some possible bugs where it's saving more than once some features.
+    Args:
+        ts (int): Step or counter used to move in time.
+        ll (int): Level analysed used to move in delta eta, where delta eta is the changes in elevation of the surface.
+        maxlevel (int): Max level defined by the user. 
+        eddys (dict): Dictionary containing all the relevant information of the features. Check "dict_eddym".
+        eddz(dict): Output dictionary of this function used to grow the features. Check "dict_eddyz".
+        threshold (float): Used to grow the detection; R=R0+threshold, where R0 is the radius of the contour.
+        diagnostics (boolean): Used to display all the statistics and plots to identify bugs.
+    Returns:
+        eddz - Dictionary containing the largest contour and parameters of each features.
+        All the keys have the following form:
+        {eddyn_0:{neddy,time,position,ellipse,contour},eddyn_1:{neddy,time,position,ellipse,contour}}
     Usage:
-    
-    Author: Josue Martinez Moreno, 2017
+        if ll == 0:
+            eddz = dict_eddyz(ii,ll,farlevel,eddies,diagnostics=diagnostics)
+        else:
+            eddz = dict_eddyz(ii,ll,farlevel,eddies,eddz,diagnostics=diagnostics)
     '''
     if eddz=='' or maxlevel==ll:
         eddz=eddys
@@ -511,6 +556,20 @@ def dict_eddyz(ts,ll,maxlevel,eddys,eddz='',threshold=1.5,diagnostics=False):
     return eddz
 
 def joindict(dict1,dict2):
+    '''
+    ********************** joindict **********************
+    Join two dictionaries containing the features parameters in time an delta eta. Useful when datasets are in multiple files.
+    Notes:
+        Check for some possible bugs where it's saving more than once some features.
+    Args:
+        dict1 (dict): Dictionary containing all the relevant information of the features. Check "dict_eddym".
+        dict2 (dict): Dictionary containing all the relevant information of the features. Check "dict_eddym".
+    Returns:
+        dict1 - Dictionary containing both input dictionaries.
+        Same keys that the initial dicionaries.
+    Usage:
+        dictjoin=joindict(eddydt1,eddydt2)
+    '''
     checklist=[]
     checklist1=[]
     checklist2=[]
