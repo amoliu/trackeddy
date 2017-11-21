@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.ma as ma
 import pylab as plt
 from scipy.interpolate import interp2d,interp1d
 from scipy.optimize import curve_fit,leastsq
@@ -256,10 +257,10 @@ def contourmaxvalue(contcoordx,contcoordy,var,x,y,levels,date=''):
     Usage:
         center_eddy=contourmaxvalue(contcoordx,contcoordx,sshnan,lon,lat,levels,date)
     '''
-    idxcheckmax,idycheckmax=find2d(x,y,contcoordx.max(),contcoordy.max())
-    idxcheckmin,idycheckmin=find2d(x,y,contcoordx.min(),contcoordy.min())
+    idxcheckmax,idycheckmax=find2l(x,y,contcoordx.max(),contcoordy.max())
+    idxcheckmin,idycheckmin=find2l(x,y,contcoordx.min(),contcoordy.min())
     #print(idycheckmin,idycheckmax,idxcheckmin,idxcheckmax)
-    if len(np.shape(var))==3 or date='':
+    if len(np.shape(var))==3 or date=='':
         if levels[0]>0:
             var[var>levels[0]]==np.nan
             sshextrem=np.nanmax(var[date,idycheckmin:idycheckmax,idxcheckmin:idxcheckmax])
@@ -299,8 +300,8 @@ def centroidvalue(contcoordx,contcoordy,var,x,y,levels,date):
     Usage:
         center_eddy=centroidvalue(contcoordx,contcoordx,sshnan,lon,lat,levels,date)
     '''
-    idxcheckmax,idycheckmax=find2d(x,y,contcoordx.max(),contcoordy.max())
-    idxcheckmin,idycheckmin=find2d(x,y,contcoordx.min(),contcoordy.min())
+    idxcheckmax,idycheckmax=find2l(x,y,contcoordx.max(),contcoordy.max())
+    idxcheckmin,idycheckmin=find2l(x,y,contcoordx.min(),contcoordy.min())
     #print(idycheckmin,idycheckmax,idxcheckmin,idxcheckmax)
     if len(np.shape(var))==3:
         if levels[0]>0:
@@ -386,7 +387,7 @@ def adjust1Gaus(x,y):
     e_gauss_fit = lambda p, x, y: (gauss_fit(p,x) -y) #1d Gaussian fit
 
     v0= [1,10,1,1,30,1] #inital guesses for Gaussian Fit. - just do it around the peaks
-    out = leastsq(e_gauss_fit, v0[:], args=(x, y), maxfev=1000, full_output=1) #Gauss Fit
+    out = leastsq(e_gauss_fit, v0[:], args=(x, y), maxfev=2000, full_output=1) #Gauss Fit
     v = out[0] #fit parameters out
     covar = out[1] #covariance matrix output
 
@@ -420,12 +421,93 @@ def adjustMGaus(x,y):
     #v0=range(0,n,int(n/10))
     v0=[1,int(n/3),1,1,int(n/2),1,1,2*int(n/3),1]
     #v0= [1,10,1,1,30,1] #inital guesses for Gaussian Fit. - just do it around the peaks
-    out = leastsq(e_gauss_fit, v0[:], args=(x, y), maxfev=1000, full_output=1) #Gauss Fit
+    out = leastsq(e_gauss_fit, v0[:], args=(x, y), maxfev=2000, full_output=1) #Gauss Fit
     v = out[0] #fit parameters out
     covar = out[1] #covariance matrix output
 
     gausfit = gauss_fit(v,x) # this will only work if the units are pixel and not wavelength
     return gausfit
+
+def twoD_Gaussian(coords, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
+    '''
+    *************** twoD_Gaussian *******************
+    Build a 2D gaussian.
+    Notes:
+        Remmember to do g.ravel().reshape(len(x),len(y)) for plotting purposes. 
+    Args:
+        coords [x,y] (list|array): Coordinates in x and y.
+        amplitude (float): Amplitud of gaussian.
+        x0 , yo (float): Center of Gausian.
+        sigma_x,sigma_y (float): Deviation.
+        theta (Float): Orientation.
+        offset (Float): Gaussian Offset.
+    Returns:
+        g.ravel() (list|array) - Gaussian surface in a list.
+    Usage:
+        Check scan_eddym function.
+    '''
+    x=coords[0]
+    y=coords[1]
+    xo = float(xo)
+    yo = float(yo)    
+    a = (np.cos(theta)**2)/(2*sigma_x**2) + (np.sin(theta)**2)/(2*sigma_y**2)
+    b = -(np.sin(2*theta))/(4*sigma_x**2) + (np.sin(2*theta))/(4*sigma_y**2)
+    c = (np.sin(theta)**2)/(2*sigma_x**2) + (np.cos(theta)**2)/(2*sigma_y**2)
+    g = offset + amplitude*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)))
+    return g.ravel()
+
+def fit2Dgaussian(var,lon,lat,level,initial_guess='',date='',diagnostics=False):
+    '''
+    *************** fit2Dgaussian *******************
+    Fit a 2D gaussian in a surface.
+    Notes:
+        
+    Args:
+        
+    Returns:
+        
+    Usage:
+        
+    '''
+    Lon, Lat = np.meshgrid(lon, lat)
+    coords=[Lon,Lat]
+    if date!='':
+        varm=var[date,:,:]*1
+    else:
+        varm=var*1
+    
+    
+    if initial_guess=='':
+        if level>0:
+            extrem=varm[:,:].max()
+            yguess,xguess=np.where(varm[:,:]==extrem)
+            varm=ma.masked_where(varm < level, varm)
+        elif level<0:
+            extrem=varm[:,:].min()
+            yguess,xguess=np.where(varm[:,:]==extrem)
+            varm=ma.masked_where(varm > level, varm)
+            #change (extrem,xguess,yguess,1,1,0,0) ones to the a and b ellipsoid fit.
+        if type(xguess)!=int:
+            initial_guess = [extrem,lon[xguess[int(len(xguess)/2)]],lat[yguess[int(len(xguess)/2)]],1,1,0,0]
+        else:
+            initial_guess = [extrem,lon[xguess],lat[yguess],1,1,0,0]
+    popt, pcov = curve_fit(twoD_Gaussian, coords, varm.ravel(), p0=initial_guess, maxfev=10000)
+    gaussfit2D = twoD_Gaussian((Lon,Lat), *popt)
+    if diagnostics==True:
+        print(initial_guess)
+        print(np.shape(var))
+        plt.pcolormesh(varm)
+        plt.title('Original Field')
+        plt.show()
+        plt.pcolormesh(gaussfit2D.reshape(len(lat), len(lon)))
+        plt.title('2D Gauss Fit')
+        plt.colorbar()
+        plt.show()
+        plt.pcolormesh(varm-gaussfit2D.reshape(len(lat), len(lon)))
+        plt.title('Difference between Fit & Original')
+        plt.colorbar()
+        plt.show()
+    return gaussfit2D.reshape(len(lat), len(lon))
 
 def rsquard(y,yfit):
     '''
@@ -530,6 +612,7 @@ def extractprofeddy(axis,field,lon,lat,n,gaus='One',kind='linear',gaussrsquarefi
     Returns:
         axisdata (array) - Data extracted in the segment.
         check (boolean) - True if gaussian adjust is greater than gaussrsquarefit.
+        field_interp (array) -
     Usage:
         Check scan_eddym function.
     '''
@@ -545,8 +628,6 @@ def extractprofeddy(axis,field,lon,lat,n,gaus='One',kind='linear',gaussrsquarefi
     
     field2interp=interp2d(lon, lat, fieldnan[:,:], kind=kind)
     field_interp = field2interp(x,y)
-    #pcolormesh(lon,lat,field,vmin=-0.000004,vmax=0.000004)
-
     axisdata=np.zeros([n])
     for ii in range(n):
         axisdata[ii]=field_interp[ii,ii]
@@ -583,3 +664,32 @@ def extractprofeddy(axis,field,lon,lat,n,gaus='One',kind='linear',gaussrsquarefi
         plt.ylabel(varname)
         plt.show()
     return axisdata,check
+
+def eddylandcheck(contour,center,lon,lat,var):
+    '''
+    *************** eddylandcheck *******************
+    Check if the contour is surrounded by land.
+    Notes:
+        
+    Args:
+        
+    Returns:
+        
+    Usage:
+        
+    '''
+    landcount=0
+    checkland=True
+    for ii in range(0,len(contour[:,0])):
+        idxcheck,idycheck=find2l(lon,lat,contour[ii,0],contour[ii,1])
+        idxelipcheck,idyelipcheck=find2l(lon,lat,center[0],center[1])
+        if len(np.shape(var))==3:
+            if var[date,idycheck,idxcheck]==np.nan:
+                landcount=countzeros+1
+        else:
+            if var[idycheck,idxcheck]==np.nan:
+                landcount=countzeros+1
+    if landcount>=len(contour[:,0])/2:
+        checkland=False
+    return checkland
+

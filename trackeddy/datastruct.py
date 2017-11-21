@@ -6,7 +6,7 @@ import warnings
 from trackeddy.savedata import *
 warnings.filterwarnings("ignore")
 
-def dict_eddym(contour, ellipse, position_eddy,position_ellipse,majoraxis_eddy,minoraxis_eddy,area,angle,number,level):
+def dict_eddym(contour, ellipse, position_eddy,position_ellipse,majoraxis_eddy,minoraxis_eddy,area,angle,number,level,gaussianfitdict):
     '''
     ********************** dict_eddym **********************
     Create a dictionary with a basic structure of the eddies. Can contain the structure of one eddy or multple eddies.
@@ -23,17 +23,18 @@ def dict_eddym(contour, ellipse, position_eddy,position_ellipse,majoraxis_eddy,m
         angle (array): Angle of the ajusted ellipse starting on the 0 degree convention (counterclockwise).
         number (list): Number of the feature. Flag used to track features in time.
         level (array): Contour level used during the identification of the feature.
+        GaussianFitdict(dict): Syntetic field of a 2D gaussian adjust.
     Returns:
         contour_data - Dictionary containing all the relevant information of the features.
         The new dictionary containing all the information has the following form:        
         {'Contour':contour,'Ellipse':ellipse,'Position':position_eddy,\
         'PositionEllipse':position_ellipse,'MajorAxis':majoraxis_eddy,\
-        'MinorAxis':minoraxis_eddy,'Area':area,'Angle':angle,'EddyN':number,'Level':level}
+        'MinorAxis':minoraxis_eddy,'Area':area,'Angle':angle,'EddyN':number,'Level':level,'2DGaussianFit':gausssianfitp}
     Usage:
         eddys=dict_eddym(contour_path,ellipse_path,position_eddy,position_ellipse,mayoraxis_eddy,minoraxis_eddy,\
                      area,angle,total_eddy,level)
     '''
-    contour_data={'Contour':contour,'Ellipse':ellipse,'Position':position_eddy,'PositionEllipse':position_ellipse,'MajorAxis':majoraxis_eddy,'MinorAxis':minoraxis_eddy,'Area':area,'Angle':angle,'EddyN':number,'Level':level}
+    contour_data={'Contour':contour,'Ellipse':ellipse,'Position':position_eddy,'PositionEllipse':position_ellipse,'MajorAxis':majoraxis_eddy,'MinorAxis':minoraxis_eddy,'Area':area,'Angle':angle,'EddyN':number,'Level':level,'2DGaussianFit':gaussianfitdict}
     return contour_data
 
 def dict_eddyt(ts,eddys,eddydt=''):
@@ -61,12 +62,14 @@ def dict_eddyt(ts,eddys,eddydt=''):
         eddydt={'eddyn_'+str(eddys['EddyN'][0][0]):{'neddy':eddys['EddyN'][0],'time':ts,'position':eddys['Position'][0],\
                 'area':eddys['Area'][0],'ellipse':[eddys['Ellipse'][0]],'contour':[eddys['Contour'][0]],\
                 'angle':eddys['Angle'][0],'position_eddy':eddys['PositionEllipse'][0],'level':eddys['Level'][0],\
-                'majoraxis':eddys['MajorAxis'][0],'minoraxis':eddys['MinorAxis'][0],'timetracking':True}}
+                'majoraxis':eddys['MajorAxis'][0],'minoraxis':eddys['MinorAxis'][0],\
+                '2dgaussianfit':eddys['2DGaussianFit'][0],'timetracking':True}}
         for nn in range(1,len(eddys['EddyN'])):
             eddydt['eddyn_'+str(eddys['EddyN'][nn][0])]={'neddy':eddys['EddyN'][nn],'time':ts,'position':eddys['Position'][nn],\
                     'area':eddys['Area'][nn],'ellipse':[eddys['Ellipse'][nn]],'contour':[eddys['Contour'][nn]],\
                     'angle':eddys['Angle'][nn],'position_eddy':eddys['PositionEllipse'][nn],'level':eddys['Level'][nn],\
-                    'majoraxis':eddys['MajorAxis'][nn],'minoraxis':eddys['MinorAxis'][nn],'timetracking':True}
+                    'majoraxis':eddys['MajorAxis'][nn],'minoraxis':eddys['MinorAxis'][nn],\
+                    '2dgaussianfit':eddys['2DGaussianFit'][nn],'timetracking':True}
     else: 
         checklist=[]
         checklist1=[]
@@ -85,6 +88,8 @@ def dict_eddyt(ts,eddys,eddydt=''):
                 ellipse=value['ellipse']
                 contour=value['contour']
                 level= value['level']
+                gaussianfit=value['2dgaussianfit']
+                
                 if isinstance(number, np.float64) or isinstance(number, np.int64):
                     number = number
                 else: 
@@ -135,6 +140,7 @@ def dict_eddyt(ts,eddys,eddydt=''):
                                             'level':np.vstack((level,eddys['Level'])),\
                                             'minoraxis':np.vstack((minoraxis,np.squeeze(eddys['MinorAxis'][0]))),\
                                             'majoraxis':np.vstack((majoraxis,np.squeeze(eddys['MajorAxis'][0]))),\
+                                            '2dgaussianfit':gaussianfit+[eddys['2DGaussianFit'][0]],\
                                             'timetracking':True}
                         
                         checklist1.append(eddys['EddyN'])
@@ -173,6 +179,7 @@ def dict_eddyt(ts,eddys,eddydt=''):
                                             'level':np.vstack((level,eddys['Level'][nn])),\
                                             'minoraxis':np.vstack((np.squeeze(minoraxis),np.squeeze(eddys['MinorAxis'][nn]))),\
                                             'majoraxis':np.vstack((np.squeeze(majoraxis),np.squeeze(eddys['MajorAxis'][nn]))),\
+                                            '2dgaussianfit':gaussianfit+eddys['2DGaussianFit'][nn],\
                                             'timetracking':True}
                         
                             checklist1.append(eddys['EddyN'][nn][0])
@@ -213,6 +220,7 @@ def dict_eddyt(ts,eddys,eddydt=''):
                                         'position_eddy':eddys['PositionEllipse'],'ellipse':[eddys['Ellipse'][0]],\
                                         'contour':[eddys['Contour'][0]],'level':eddys['Level'],\
                                         'minoraxis':eddys['MinorAxis'][0],'majoraxis':eddys['MajorAxis'][0],\
+                                        '2dgaussianfit':eddys['2DGaussianFit'][0],\
                                         'timetracking':True}
                 else:
                     for nn in range(0,len(eddys['EddyN'])):
@@ -234,6 +242,7 @@ def dict_eddyt(ts,eddys,eddydt=''):
                                         'position_eddy':eddys['PositionEllipse'][nn],'ellipse':[eddys['Ellipse'][nn]],\
                                         'contour':[eddys['Contour'][nn]],'level':eddys['Level'][nn],\
                                         'minoraxis':eddys['MinorAxis'][nn],'majoraxis':eddys['MajorAxis'][nn],\
+                                        '2dgaussianfit':eddys['2DGaussianFit'][nn],\
                                         'timetracking':True}
     return eddydt
 

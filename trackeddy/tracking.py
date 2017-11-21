@@ -40,6 +40,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
     contour_path=[]
     mayoraxis_eddy=[]
     minoraxis_eddy=[]
+    gaussianfitdict=[]
     shapedata=np.shape(ssh)
     if ssh is ma.masked:
         print('Invalid ssh data, must be masked')
@@ -59,9 +60,13 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
     if mask!='':
         ssh=np.ma.masked_array(ssh, mask)
     sshnan=ssh.filled(np.nan)
-
-    #sshnan=ma.masked_array(okparm, mask=mask[0,:,:])
-    #sshnan=sshnan.filled(nan)
+    
+    #Join sintetic fields for each level (Not useful for the final goal)
+    #if len(shapedata)==3:
+    #    syntetic_ssha=np.zeros(shapedata[1],shapedata[2])
+    #else:
+    #    syntetic_ssha=np.zeros(shapedata)
+    
     #Obtain the contours of a surface (contourf), this aproach is better than the contour.
     if len(np.shape(lon))== 1 and len(np.shape(lat)) == 1:
         Lon,Lat=np.meshgrid(lon,lat)
@@ -105,6 +110,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
     #Loop in contours of the levels defined.
     total_contours=0
     eddyn=0
+    threshold=4
     for ii in range(0,np.shape(CONTS)[0]):
         CONTSlvls=CONTS[ii]
         for jj in range(0,np.shape(CONTSlvls)[0]):
@@ -116,7 +122,44 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                 check=False
             else:
                 ellipse,status=fit_ellipse(CONTeach[:,0],CONTeach[:,1],diagnostics=diagnostics)
+                checke=False
                 if status==True:
+                    checke=False
+                    ellipseadjust,checke=ellipsoidfit(CONTeach[:,1],ellipse['ellipse'][1],\
+                                                  ellipsrsquarefit=ellipsrsquarefit,\
+                                                  diagnostics=diagnostics)
+                if checke==True:
+                    xidmin,xidmax=find2l(lon,lon,CONTeach[:,0].min(),CONTeach[:,0].max())
+                    yidmin,yidmax=find2l(lat,lat,CONTeach[:,1].min(),CONTeach[:,1].max())
+                    
+                    if xidmin<=threshold-1:
+                        xidmin=+threshold-1
+                    elif xidmax>=len(lon)-threshold:
+                        xidmax=len(lon)-threshold
+                    if yidmin<=threshold-1:
+                        yidmin=threshold-1
+                    elif yidmax>=len(lat)-threshold:
+                        yidmax=len(lat)-threshold
+                    lon_contour=lon[xidmin-threshold+1:xidmax+threshold]
+                    lat_contour=lat[yidmin-threshold+1:yidmax+threshold]
+                    if len(shapedata)==3:
+                        ssh_in_contour=sshnan[date,yidmin-threshold+1:yidmax+threshold,xidmin-threshold+1:xidmax+threshold]
+                        #ssh_in_contour[0,:]=0
+                        #ssh_in_contour[-1,:]=0
+                        #ssh_in_contour[:,0]=0
+                        #ssh_in_contour[:,-1]=0
+                    else:
+                        ssh_in_contour=sshnan[yidmin-threshold+1:yidmax+threshold,xidmin-threshold+1:xidmax+threshold]
+                        #ssh_in_contour[0,:]=0
+                        #ssh_in_contour[-1,:]=0
+                        #ssh_in_contour[:,0]=0
+                        #ssh_in_contour[:,-1]=0
+                        
+                    #USE ALL THE DOMAIN    
+                    #ssh_in_contour=sshnan
+                    #lon_contour=lon
+                    #lat_contour=lat
+                    
                     center = [ellipse['X0_in'],ellipse['Y0_in']]
                     phi = ellipse['phi']
                     axes = [ellipse['a'],ellipse['b']]
@@ -136,21 +179,12 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                     # Linear Eccentricity check
                     eccen=eccentricity(a,b)
                     #Record and check how many grid points have land or masked values
-                    landcount=0
-                    for ii in range(0,len(CONTeach[:,0])):
-                        idxcheck,idycheck=find2d(lon,lat,CONTeach[ii,0],CONTeach[ii,1])
-                        idxelipcheck,idyelipcheck=find2d(lon,lat,center[0],center[1])
-                        if len(shapedata)==3:
-                            if sshnan[date,idycheck,idxcheck]==np.nan:
-                                landcount=countzeros+1
-                        else:
-                            if sshnan[idycheck,idxcheck]==np.nan:
-                                landcount=countzeros+1
-                    if landcount>=len(CONTeach[:,0])/2:
-                        #print 'Thisone is land'
+                    
+                    checkland=eddylandcheck(CONTeach,center,lon_contour,lat_contour,ssh_in_contour)
+                    
+                    if checkland==False:
                         check=False
                     else:
-                        checke=False
                         checkM=False
                         checkm=False 
                         if contarea>ellipsarea:
@@ -159,36 +193,54 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                             if eccen<eccenfit and eccen>0:
                                 if ellipsarea < 200 and contarea < 200:
                                     if checkgauss==True:
-                                        
-                                        #tic=time.time()
-                                        ellipseadjust,checke=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
-                                                                          [1],ellipsrsquarefit=ellipsrsquarefit,\
-                                                                          diagnostics=diagnostics)
+                                        if len(shapedata)==3:
+                                            
+                                            profile,checkM=extractprofeddy(mayoraxis,\
+                                                           ssh_in_contour,lon_contour,lat_contour,50,\
+                                                           gaus='One',kind='linear',\
+                                                           gaussrsquarefit=gaussrsquarefit,\
+                                                           diagnostics=diagnostics)
+                                            if checkM==True:
+                                                profile,checkm=extractprofeddy(minoraxis,\
+                                                               ssh_in_contour,lon_contour,lat_contour,50,\
+                                                               gaus='One',kind='linear',\
+                                                               gaussrsquarefit=gaussrsquarefit,\
+                                                               diagnostics=diagnostics)
+                                        else:
+                                            profile,checkM=extractprofeddy(mayoraxis,\
+                                                           ssh_in_contour,lon_contour,lat_contour,50,\
+                                                           gaus='One',kind='linear',\
+                                                           gaussrsquarefit=gaussrsquarefit,\
+                                                           diagnostics=diagnostics)
+                                            if checkM==True:
+                                                profile,checkm=extractprofeddy(minoraxis,\
+                                                               ssh_in_contour,lon_contour,lat_contour,50,\
+                                                               gaus='One',kind='linear',\
+                                                               gaussrsquarefit=gaussrsquarefit,\
+                                                               diagnostics=diagnostics)
                                         #print('Time elapsed ellipsoidfit:',str(time.time()-tic))
-                                        
-                                        if checke==True:
-                                            #tic=time.time()
-                                            if len(shapedata)==3:
-                                                profile,checkM=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
-                                                                  diagnostics=diagnostics)
-                                                if checkM==True:
-                                                    profile,checkm=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                      gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
-                                                                      diagnostics=diagnostics)
-                                            else:
-                                                profile,checkM=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
-                                                                  diagnostics=diagnostics)
-                                                if checkM==True:
-                                                    profile,checkm=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
-                                                                      gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
-                                                                      diagnostics=diagnostics)
-                                        #print('Time elapsed ellipsoidfit:',str(time.time()-tic))
-                                        if checkM==True and  checke==True and checkm==True: 
+                                        if checkM==True and checkm==True: 
                                             check=True
+                                            if levels[0] > 0:
+                                                level=levels[0]
+                                                removecontourout=ssh_in_contour>level
+                                            else:
+                                                level=levels[1]
+                                                removecontourout=ssh_in_contour<level
+                                                
+                                            gausssianfitp=fit2Dgaussian(ssh_in_contour,\
+                                                          lon_contour,lat_contour,\
+                                                          level,initial_guess='',date='')
+                                            #syntetic_ssha[yidmin-6:yidmax+7,xidmin-6:xidmax+7]=\
+                                            #        syntetic_ssha[yidmin-6:yidmax+7,xidmin-\
+                                            #                      6:xidmax+7]+gausssianfitp
+                                            #USE ALL THE DOMAIN    
+                                            #syntetic_ssha=gausssianfitp
+                                            
                                         else:
                                             check=False
+                                    else:
+                                        print('Checkgauss need to be True')
                                 else:
                                     check=False
                             else:
@@ -201,35 +253,52 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                             if eccen<eccenfit and eccen>0:
                                 if ellipsarea < 200 and contarea<200:
                                     if checkgauss==True:
-                                        #tic=time.time()
-                                        ellipseadjust,checke=ellipsoidfit(CONTeach[:,1],ellipse['ellipse']\
-                                                                          [1],ellipsrsquarefit=ellipsrsquarefit,\
-                                                                          diagnostics=diagnostics)
-                                        #print('Time elapsed ellipsoidfit:',str(time.time()-tic))
-                                        
-                                        if checke==True:
-                                            #tic=time.time()
-                                            if len(shapedata)==3:
-                                                profile,checkM=extractprofeddy(mayoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
-                                                                  diagnostics=diagnostics)
-                                                if checkM==True:
-                                                    profile,checkm=extractprofeddy(minoraxis,sshnan[date,:,:],lon,lat,50,\
-                                                                      gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
-                                                                      diagnostics=diagnostics)
-                                            else:
-                                                profile,checkM=extractprofeddy(mayoraxis,sshnan[:,:],lon,lat,50,\
-                                                                  gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
-                                                                  diagnostics=diagnostics)
-                                                if checkM==True:
-                                                    profile,checkm=extractprofeddy(minoraxis,sshnan[:,:],lon,lat,50,\
-                                                                      gaus='One',kind='linear',gaussrsquarefit=gaussrsquarefit,\
-                                                                      diagnostics=diagnostics)
-                                        #print('Time elapsed ellipsoidfit:',str(time.time()-tic))
-                                        if checkM==True and  checke==True and checkm==True: 
+                                        if len(shapedata)==3:
+                                            profile,checkM=extractprofeddy(mayoraxis,\
+                                                           ssh_in_contour,lon_contour,lat_contour,50,\
+                                                           gaus='One',kind='linear',\
+                                                           gaussrsquarefit=gaussrsquarefit,\
+                                                           diagnostics=diagnostics)
+                                            if checkM==True:
+                                                profile,checkm=extractprofeddy(minoraxis,\
+                                                               ssh_in_contour,lon_contour,lat_contour,50,\
+                                                               gaus='One',kind='linear',\
+                                                               gaussrsquarefit=gaussrsquarefit,\
+                                                               diagnostics=diagnostics)
+                                        else:
+                                            profile,checkM=extractprofeddy(mayoraxis,\
+                                                           ssh_in_contour,lon_contour,lat_contour,50,\
+                                                           gaus='One',kind='linear',\
+                                                           gaussrsquarefit=gaussrsquarefit,\
+                                                           diagnostics=diagnostics)
+                                            if checkM==True:
+                                                profile,checkm=extractprofeddy(minoraxis,\
+                                                               ssh_in_contour,lon_contour,lat_contour,50,\
+                                                               gaus='One',kind='linear',\
+                                                               gaussrsquarefit=gaussrsquarefit,\
+                                                               diagnostics=diagnostics)
+                                      #print('Time elapsed ellipsoidfit:',str(time.time()-tic))
+                                        if checkM==True and checkm==True:
                                             check=True
+                                            if levels[0] > 0:
+                                                level=levels[0]
+                                                removecontourout=ssh_in_contour>level
+                                            else:
+                                                level=levels[1]
+                                                removecontourout=ssh_in_contour<level
+                                                
+                                            gausssianfitp=fit2Dgaussian(ssh_in_contour,\
+                                                          lon_contour,lat_contour,\
+                                                          level,initial_guess='',date='')
+                                            #syntetic_ssha[yidmin-6:yidmax+7,xidmin-6:xidmax+7]=\
+                                            #        syntetic_ssha[yidmin-6:yidmax+7,xidmin-\
+                                            #                      6:xidmax+7]+gausssianfitp
+                                            #USE ALL THE DOMAIN
+                                            #syntetic_ssha=gausssianfitp
                                         else:
                                             check=False
+                                    else:
+                                        print('Checkgauss need to be True')
                                 else:
                                     check=False
                             else:
@@ -239,7 +308,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                         else:
                             check=False
                             
-                    if diagnostics == True: #and  check == True:
+                    if diagnostics == True and  check == True:
                         print("Ellipse parameters")
                         print("Ellipse center = ",  center)
                         print("angle of rotation = ",  phi)
@@ -249,16 +318,23 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                         print("Ellipse adjust = ",ellipseadjust)
                         print("Mayor Gauss fit = ",checkM)
                         print("Minor Gauss fit = ",checkm)
+                        plt.pcolormesh(gausssianfitp)
+                        plt.title('Syntetic Field')
+                        plt.colorbar()
+                        plt.show()
+                        
                     if check==True:# or check==False:
                         ellipse_path.append([xx,yy])
                         contour_path.append([CONTeach[:,0],CONTeach[:,1]])
                         mayoraxis_eddy.append([mayoraxis[0],mayoraxis[1]])
                         minoraxis_eddy.append([minoraxis[0],minoraxis[1]])
+                        gaussianfitdict.append([{'gaussfit':gausssianfitp,'xindexpos':[xidmin-threshold+1,xidmax+threshold],\
+                            'yindexpos':[yidmin-threshold+1,yidmax+threshold]}])
                         #Switch from the ellipse center to the position of the maximum value inside de contour
                         if eddycenter == 'maximum':
-                            center_eddy=contourmaxvalue(CONTeach[:,0],CONTeach[:,1],sshnan,lon,lat,levels,date)
+                            center_eddy=contourmaxvalue(CONTeach[:,0],CONTeach[:,1],ssh_in_contour,lon_contour,lat_contour,levels,date)
                         elif eddycenter == 'masscenter':
-                            center_eddy=centroidvalue(CONTeach[:,0],CONTeach[:,1],sshnan,lon,lat,levels,date)
+                            center_eddy=centroidvalue(CONTeach[:,0],CONTeach[:,1],ssh_in_contour,lon_contour,lat_contour,levels,date)
                         if eddyn==0:
                             position_eddy=center_eddy
                             position_ellipse=center
@@ -269,7 +345,7 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                                 level=CS.levels[0]
                             else:
                                 level=CS.levels[1]
-                            levelprnt=level
+                            levelm=[level]
                         else:
                             position_eddy=np.vstack((position_eddy,center_eddy))
                             position_ellipse=np.vstack((position_ellipse,center))
@@ -279,11 +355,11 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                             
                             if CS.levels[0] > 0:
                                 levelprnt=CS.levels[0]
-                                level=np.vstack((level,levelprnt))
+                                levelm=np.vstack((levelm,levelprnt))
                             else:
                                 levelprnt=CS.levels[1]
-                                level=np.vstack((level,levelprnt))
-                        
+                                levelm=np.vstack((levelm,levelprnt))
+                            
                         eddyn=eddyn+1
                     if diagnostics == True: #and plotdata == True:
                         f, (ax1, ax2) = plt.subplots(1, 2,figsize=(13, 6))
@@ -324,25 +400,29 @@ def scan_eddym(ssh,lon,lat,levels,date,areamap,mask='',destdir='',physics='',bas
                         ax2.plot(CONTeach[:,0],CONTeach[:,1],'-r')
                         ax2.plot(xx,yy,'-b')
                         ax2.plot(center[0],center[1],'ob')
+                        idxelipcheck,idyelipcheck=find2l(lon,lat,center[0],center[1])
                         ax2.plot(lon[idxelipcheck],lat[idyelipcheck],'om')
                         ax2.set_ylim([CONTeach[:,1].min(),CONTeach[:,1].max()])
                         ax2.set_xlim([CONTeach[:,0].min(),CONTeach[:,0].max()])
                         plt.show()
                         plt.close()
+                        
                 total_contours=total_contours+1
             if pprint==True:
-                string='Total of contours was: %d - Total of eddies: %d - Level: %.1f   ' % (total_contours,eddyn,levelprnt)
+                string='Total of contours was: %d - Total of eddies: %d - Level: %.1f   ' % (total_contours,eddyn,level)
                 pt =Printer(); pt.printtextoneline(string)
         try:
             position_eddy=np.array(position_eddy)
             position_ellipse=np.array(position_ellipse)
-            level=np.array(level)
+#            if type(level)==float or type(level)==int or isinstance(level, float):
+#                level=[np.array(level)]
+#            else:
+            levelm=np.array(levelm)
             mayoraxis_eddy=np.array(mayoraxis_eddy)
             minoraxis_eddy=np.array(minoraxis_eddy)
             eddys=dict_eddym(contour_path,ellipse_path,position_eddy,position_ellipse,mayoraxis_eddy,minoraxis_eddy,\
-                     area,angle,total_eddy,level)
+                     area,angle,total_eddy,levelm,gaussianfitdict)
             check=True
-        
         except:
             eddys=0
             check=False
@@ -414,8 +494,8 @@ def exeddydt(eddydt,lat,lon,data,threshold,inside='',diagnostics=False):
                 latmi=value['contour'][ct][1].min()
                 latma=value['contour'][ct][1].max()
             
-            mimcx,mimcy=find2d(lon,lat,lonmi,latmi)
-            mamcx,mamcy=find2d(lon,lat,lonma,latma)
+            mimcx,mimcy=find2l(lon,lat,lonmi,latmi)
+            mamcx,mamcy=find2l(lon,lat,lonma,latma)
             loncm=lon[mimcx-threshold:mamcx+1+threshold]
             latcm=lat[mimcy-threshold:mamcy+1+threshold]
             
@@ -493,8 +573,8 @@ def exeddy(eddydt,lat,lon,data,ct,threshold,inside='',diagnostics=False):
             latmi=value['contour'][ct][1].min()
             latma=value['contour'][ct][1].max()
             
-        mimcx,mimcy=find2d(lon,lat,lonmi,latmi)
-        mamcx,mamcy=find2d(lon,lat,lonma,latma)
+        mimcx,mimcy=find2l(lon,lat,lonmi,latmi)
+        mamcx,mamcy=find2l(lon,lat,lonma,latma)
         loncm=lon[mimcx-threshold:mamcx+1+threshold]
         latcm=lat[mimcy-threshold:mamcy+1+threshold]
 

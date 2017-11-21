@@ -86,10 +86,6 @@ def geovelfield(ssha,lon,lat,mask):
     u= np.ma.masked_array(u, mask)
     v= np.ma.masked_array(v, mask)
     return u,v
-
-
-def EkE(eta,u,v):
-    print('Work in progress')
     
 def KE(u,v):
     ke=(1/2)*(u**2+v**2)
