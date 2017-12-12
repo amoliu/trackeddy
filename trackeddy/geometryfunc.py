@@ -428,7 +428,7 @@ def adjustMGaus(x,y):
     gausfit = gauss_fit(v,x) # this will only work if the units are pixel and not wavelength
     return gausfit
 
-def twoD_Gaussian(coords, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
+def twoD_Gaussian(coords, amplitude, xo, yo, sigma_x, sigma_y, theta, slopex, slopey, offset=0):
     '''
     *************** twoD_Gaussian *******************
     Build a 2D gaussian.
@@ -453,7 +453,7 @@ def twoD_Gaussian(coords, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
     a = (np.cos(theta)**2)/(2*sigma_x**2) + (np.sin(theta)**2)/(2*sigma_y**2)
     b = -(np.sin(2*theta))/(4*sigma_x**2) + (np.sin(2*theta))/(4*sigma_y**2)
     c = (np.sin(theta)**2)/(2*sigma_x**2) + (np.cos(theta)**2)/(2*sigma_y**2)
-    g = offset + amplitude*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)))
+    g = offset + slopex*x + slopey*y + amplitude*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)))
     return g.ravel()
 
 def fit2Dgaussian(var,lon,lat,level,initial_guess='',date='',diagnostics=False):
@@ -488,26 +488,32 @@ def fit2Dgaussian(var,lon,lat,level,initial_guess='',date='',diagnostics=False):
             varm=ma.masked_where(varm > level, varm)
             #change (extrem,xguess,yguess,1,1,0,0) ones to the a and b ellipsoid fit.
         if type(xguess)!=int:
-            initial_guess = [extrem,lon[xguess[int(len(xguess)/2)]],lat[yguess[int(len(xguess)/2)]],1,1,0,0]
+            initial_guess = [extrem,lon[xguess[int(len(xguess)/2)]],lat[yguess[int(len(xguess)/2)]],1,1,0,0,0]
         else:
-            initial_guess = [extrem,lon[xguess],lat[yguess],1,1,0,0]
-    popt, pcov = curve_fit(twoD_Gaussian, coords, varm.ravel(), p0=initial_guess, maxfev=10000)
+            initial_guess = [extrem,lon[xguess],lat[yguess],1,1,0,0,0]
+    try:
+        popt, pcov = curve_fit(twoD_Gaussian, coords, varm.ravel(), p0=initial_guess, maxfev=10000)
+    except:
+        popt=initial_guess
     gaussfit2D = twoD_Gaussian((Lon,Lat), *popt)
+    gaussfitdict = popt
     if diagnostics==True:
-        print(initial_guess)
+        print("             |amplitud|x0|y0|sigmaX|sigmaY|Theta|slopeX|slopeY|")
+        print("initial guess|:" + ''.join(str(e)+'|' for e in initial_guess))
+        print("Fit.         |:" + ''.join(str(e)+'|' for e in gaussfitdict))
         print(np.shape(var))
-        plt.pcolormesh(varm)
+        plt.pcolormesh(lon,lat,varm)
         plt.title('Original Field')
         plt.show()
-        plt.pcolormesh(gaussfit2D.reshape(len(lat), len(lon)))
+        plt.pcolormesh(lon,lat,gaussfit2D.reshape(len(lat), len(lon)))
         plt.title('2D Gauss Fit')
         plt.colorbar()
         plt.show()
-        plt.pcolormesh(varm-gaussfit2D.reshape(len(lat), len(lon)))
+        plt.pcolormesh(lon,lat,varm-gaussfit2D.reshape(len(lat), len(lon)))
         plt.title('Difference between Fit & Original')
         plt.colorbar()
         plt.show()
-    return gaussfit2D.reshape(len(lat), len(lon))
+    return gaussfitdict
 
 def rsquard(y,yfit):
     '''
@@ -529,12 +535,12 @@ def rsquard(y,yfit):
         gaussianfit=adjustMGaus(x,gaussian)
         R2=rsquard(gaussian,gaussianfit)
     '''
-    #yhat=y1            # or [p(z) for z in x]
-    #ybar = np.sum(y)/len(y)          # or sum(y)/len(y)
-    #ssreg = np.sum((y-yhat)**2)   # or sum([ (yihat - ybar)**2 for yihat in yhat])
-    #sstot = np.sum((y - ybar)**2)    # or sum([ (yi - ybar)**2 for yi in y])
-    #R2 = 1 - ssreg / sstot
-    R2=np.corrcoef(y, yfit)[0,1]
+    yhat=yfit            # or [p(z) for z in x]
+    ybar = np.sum(y)/len(y)          # or sum(y)/len(y)
+    ssreg = np.sum((y-yhat)**2)   # or sum([ (yihat - ybar)**2 for yihat in yhat])
+    sstot = np.sum((y - ybar)**2)    # or sum([ (yi - ybar)**2 for yi in y])
+    R2 = 1 - ssreg / sstot
+    #R2=np.corrcoef(y, yfit)[0,1]
     #print(numpadj[0,1],R2,' geometry file')
     return R2 
 
@@ -693,3 +699,29 @@ def eddylandcheck(contour,center,lon,lat,var):
         checkland=False
     return checkland
 
+def reconstruct_syntetic(varshape,lon,lat,eddytd):
+    '''
+    *************** reconstruct_syntetic *******************
+    Recunstruct the syntetic field using the gaussian 
+    parameters saved in the dictionary of eddies.
+    Notes:
+        
+    Args:
+        
+    Returns:
+        
+    Usage:
+    
+    '''
+    Lon,Lat=np.meshgrid(lon,lat)
+    fieldfit=np.zeros(varshape)
+    for key in eddytd.keys():
+        counter=0
+        for tt in eddytd[key]['time']:
+            gaussfit=eddytd[key]['2dgaussianfit'][counter]
+            if isinstance(gaussfit, np.float64):
+                gaussfit=eddytd[key]['2dgaussianfit']
+            gaussian=twoD_Gaussian((Lon,Lat), *gaussfit)
+            fieldfit[tt,:,:]=fieldfit[tt,:,:]+gaussian.reshape(len(lat),len(lon))
+            counter=counter+1
+    return fieldfit
