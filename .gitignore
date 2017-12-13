@@ -107,9 +107,11 @@ ENV/
 
 # Data
 data.input/
+data.output/
 phd_research/
 
 # Git
 .gitignore
 *_bk.ipynb
 *.ipynb_bk
+_*/
