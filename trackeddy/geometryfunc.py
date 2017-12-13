@@ -721,6 +721,8 @@ def reconstruct_syntetic(varshape,lon,lat,eddytd):
             gaussfit=eddytd[key]['2dgaussianfit'][counter]
             if isinstance(gaussfit, np.float64):
                 gaussfit=eddytd[key]['2dgaussianfit']
+            gaussfit[-1]=0
+            gaussfit[-2]=0
             gaussian=twoD_Gaussian((Lon,Lat), *gaussfit)
             fieldfit[tt,:,:]=fieldfit[tt,:,:]+gaussian.reshape(len(lat),len(lon))
             counter=counter+1
